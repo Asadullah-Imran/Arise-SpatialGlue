@@ -253,7 +253,7 @@ def build_4encoder_graphs(RNA_expression, ADT_expression, cell_positions, device
     knn_graph = kneighbors_graph(cell_positions, n_neighbors=num_neighbors, mode='distance', include_self=False)
     knn_graph = knn_graph.maximum(knn_graph.T)
 
-    dist_edge_index = torch.tensor(knn_graph.nonzero(), dtype=torch.long).to(device)
+    dist_edge_index = torch.tensor(np.array(knn_graph.nonzero()), dtype=torch.long).to(device)
     dist_edge_weight = torch.tensor(knn_graph.data, dtype=torch.float).to(device)
 
     # 2. RNA Similarity Graph
