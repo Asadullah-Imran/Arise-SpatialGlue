@@ -43,6 +43,7 @@ from sklearn.metrics import (
     homogeneity_score,
     v_measure_score,
     silhouette_score,
+    silhouette_samples,
     calinski_harabasz_score,
     davies_bouldin_score
 )
@@ -646,6 +647,148 @@ def plot_training_curves(training_results, dataset_name="Dataset", save_path=Non
         plt.close()
 
 
+def plot_all_visualizations(
+    adata_RNA,
+    results,
+    dataset_name="Dataset",
+    seed=42,
+    rna_pca_comps=60,
+    output_dir="results",
+    show=False
+):
+    """
+    Generate and save complete visualizations:
+    1. Training Curves (Loss, Silhouette, ARI)
+    2. Ground Truth vs Predicted Spatial Domains
+    3. UMAP Scatter Plots (Ground Truth & Predicted Domains)
+    4. Violin Plots (Silhouette Coefficient & Latent Dim Profiles)
+    """
+    plots_dir = os.path.join(output_dir, "plots")
+    os.makedirs(os.path.join(plots_dir, "curves"), exist_ok=True)
+    os.makedirs(os.path.join(plots_dir, "spatial"), exist_ok=True)
+    os.makedirs(os.path.join(plots_dir, "umap"), exist_ok=True)
+    os.makedirs(os.path.join(plots_dir, "violin"), exist_ok=True)
+
+    best_embeddings = results['best_embeddings']
+    best_labels = results['best_labels']
+    sil = results['best_sil']
+    ari = results.get('best_ari', 0.0)
+
+    # 1. 📈 Plot Loss Curve, Silhouette Score Curve, and ARI Curve
+    curve_path = os.path.join(plots_dir, "curves", f"{dataset_name}_seed{seed}_training_curves.png")
+    plot_training_curves(
+        results,
+        dataset_name=f"{dataset_name} (RNA PCA {rna_pca_comps} Comps, Seed {seed})",
+        save_path=curve_path,
+        show=show
+    )
+
+    # Ensure adata has necessary annotations
+    adata_RNA.obsm['Arise_1Layer'] = best_embeddings
+    adata_RNA.obs['predicted_domain'] = pd.Categorical(best_labels.astype(str))
+
+    # 2. 🗺️ Ground Truth vs Predicted Spatial Domains Plot
+    fig, axes = plt.subplots(1, 2, figsize=(15, 6.5))
+    sc.pl.spatial(
+        adata_RNA,
+        color='ground_truth',
+        spot_size=1.5,
+        ax=axes[0],
+        show=False,
+        title=f'Ground Truth ({dataset_name})'
+    )
+    sc.pl.spatial(
+        adata_RNA,
+        color='predicted_domain',
+        spot_size=1.5,
+        ax=axes[1],
+        show=False,
+        title=f'Arise 4-Encoder 1-Layer Domains (ARI: {ari:.4f})'
+    )
+    plt.suptitle(f"Spatial Domains Comparison - {dataset_name} (Seed {seed})", fontsize=14, fontweight='bold', y=1.02)
+    plt.tight_layout()
+    spatial_path = os.path.join(plots_dir, "spatial", f"{dataset_name}_seed{seed}_spatial.png")
+    plt.savefig(spatial_path, dpi=300, bbox_inches='tight')
+    if show:
+        plt.show()
+    else:
+        plt.close()
+
+    # 3. 🎨 Compute UMAP on Arise 1-Layer joint embeddings
+    sc.pp.neighbors(adata_RNA, use_rep='Arise_1Layer')
+    sc.tl.umap(adata_RNA)
+
+    fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+    sc.pl.umap(
+        adata_RNA,
+        color='ground_truth',
+        ax=axes[0],
+        show=False,
+        title='UMAP: Ground Truth Annotation'
+    )
+    sc.pl.umap(
+        adata_RNA,
+        color='predicted_domain',
+        ax=axes[1],
+        show=False,
+        title=f'UMAP: Predicted Domains (Silhouette: {sil:.4f})'
+    )
+    plt.suptitle(f"UMAP Joint Representation - {dataset_name} (Seed {seed})", fontsize=14, fontweight='bold', y=1.02)
+    plt.tight_layout()
+    umap_path = os.path.join(plots_dir, "umap", f"{dataset_name}_seed{seed}_umap.png")
+    plt.savefig(umap_path, dpi=300, bbox_inches='tight')
+    if show:
+        plt.show()
+    else:
+        plt.close()
+
+    # 4. 🎻 Violin Plots: Silhouette Coefficients & Latent Features
+    sample_sil_values = silhouette_samples(best_embeddings, best_labels)
+    adata_RNA.obs['silhouette_coefficient'] = sample_sil_values
+    adata_RNA.obs['Latent_Dim_1'] = best_embeddings[:, 0]
+    adata_RNA.obs['Latent_Dim_2'] = best_embeddings[:, 1]
+
+    fig, axes = plt.subplots(1, 2, figsize=(16, 5.5))
+    sns.violinplot(
+        data=adata_RNA.obs,
+        x='predicted_domain',
+        y='silhouette_coefficient',
+        palette='Set2',
+        inner='quartile',
+        ax=axes[0]
+    )
+    axes[0].axhline(sil, color='red', linestyle='--', label=f'Mean Sil: {sil:.4f}')
+    axes[0].set_title("Silhouette Coefficient per Predicted Domain", fontsize=12, fontweight='bold')
+    axes[0].set_xlabel("Predicted Domain")
+    axes[0].set_ylabel("Silhouette Coefficient")
+    axes[0].legend(loc='upper right')
+    axes[0].grid(True, linestyle='--', alpha=0.3)
+
+    sns.violinplot(
+        data=adata_RNA.obs,
+        x='predicted_domain',
+        y='Latent_Dim_1',
+        palette='tab10',
+        inner='box',
+        ax=axes[1]
+    )
+    axes[1].set_title("Latent Dimension 1 Distribution per Domain", fontsize=12, fontweight='bold')
+    axes[1].set_xlabel("Predicted Domain")
+    axes[1].set_ylabel("Latent Embedding Dim 1")
+    axes[1].grid(True, linestyle='--', alpha=0.3)
+
+    plt.suptitle(f"Violin Plots: Cluster Profiles - {dataset_name} (Seed {seed})", fontsize=14, fontweight='bold', y=1.02)
+    plt.tight_layout()
+    violin_path = os.path.join(plots_dir, "violin", f"{dataset_name}_seed{seed}_violin.png")
+    plt.savefig(violin_path, dpi=300, bbox_inches='tight')
+    if show:
+        plt.show()
+    else:
+        plt.close()
+
+    print(f"📊 Visualizations saved to: {plots_dir}/")
+
+
 # ==============================================================================
 # 7. Experiment Runner (Python API)
 # ==============================================================================
@@ -664,7 +807,8 @@ def run_experiment(
     out_dim: int = 64,
     dropout: float = 0.0,
     device: Optional[str] = None,
-    save_curves: bool = True,
+    visualize: bool = True,
+    show_plots: bool = False,
     output_dir: str = "results",
     data_dir: str = "data"
 ):
@@ -812,12 +956,17 @@ def run_experiment(
             print(f"• Best Silhouette : {best_sil:.4f} (Epoch {best_epoch}) | ARI @ Best: {ari:.4f} | NMI: {nmi:.4f}")
             print(f"• Last Silhouette : {last_sil:.4f} (Epoch {epochs})     | Last ARI   : {last_ari:.4f}")
 
-            # Plot and save curves if requested
-            if save_curves:
-                curve_save_dir = os.path.join(output_dir, "curves")
-                os.makedirs(curve_save_dir, exist_ok=True)
-                curve_path = os.path.join(curve_save_dir, f"Arise4Encoder1Layer_{dataset_name}_seed_{seed}_curves.png")
-                plot_training_curves(result, dataset_name=f"{dataset_name} (Seed {seed})", save_path=curve_path, show=False)
+            # Plot and save all visualizations if requested
+            if visualize:
+                plot_all_visualizations(
+                    adata_RNA=adata_RNA,
+                    results=result,
+                    dataset_name=dataset_name,
+                    seed=seed,
+                    rna_pca_comps=rna_pca_comps,
+                    output_dir=output_dir,
+                    show=show_plots
+                )
 
             res_dict = {
                 'dataset': dataset_name,
@@ -893,7 +1042,9 @@ if __name__ == '__main__':
     parser.add_argument('--out_dim', type=int, default=64, help="Embedding dimension")
     parser.add_argument('--dropout', type=float, default=0.0, help="Dropout rate")
     parser.add_argument('--device', type=str, default=None, help="'cuda', 'cuda:0', or 'cpu'")
-    parser.add_argument('--output_dir', type=str, default='results', help="Directory to save CSV results")
+    parser.add_argument('--visualize', action='store_true', default=True, help="Generate and save all plots (Curves, Spatial, UMAP, Violin)")
+    parser.add_argument('--show_plots', action='store_true', default=False, help="Display plots interactively")
+    parser.add_argument('--output_dir', type=str, default='results', help="Directory to save CSV results and plots")
     parser.add_argument('--data_dir', type=str, default='data', help="Directory to save/load datasets")
 
     cli_args = parser.parse_args()
@@ -912,6 +1063,8 @@ if __name__ == '__main__':
         out_dim=cli_args.out_dim,
         dropout=cli_args.dropout,
         device=cli_args.device,
+        visualize=cli_args.visualize,
+        show_plots=cli_args.show_plots,
         output_dir=cli_args.output_dir,
         data_dir=cli_args.data_dir
     )
