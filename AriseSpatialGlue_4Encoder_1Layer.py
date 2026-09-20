@@ -653,6 +653,7 @@ def plot_all_visualizations(
     dataset_name="Dataset",
     seed=42,
     rna_pca_comps=60,
+    true_labels=None,
     output_dir="results",
     show=False
 ):
@@ -674,6 +675,15 @@ def plot_all_visualizations(
     sil = results['best_sil']
     ari = results.get('best_ari', 0.0)
 
+    # Ensure adata has necessary annotations
+    if true_labels is not None:
+        adata_RNA.obs['ground_truth'] = pd.Categorical(true_labels)
+    elif 'ground_truth' not in adata_RNA.obs:
+        adata_RNA.obs['ground_truth'] = pd.Categorical(best_labels.astype(str))
+
+    adata_RNA.obsm['Arise_1Layer'] = best_embeddings
+    adata_RNA.obs['predicted_domain'] = pd.Categorical(best_labels.astype(str))
+
     # 1. 📈 Plot Loss Curve, Silhouette Score Curve, and ARI Curve
     curve_path = os.path.join(plots_dir, "curves", f"{dataset_name}_seed{seed}_training_curves.png")
     plot_training_curves(
@@ -683,28 +693,29 @@ def plot_all_visualizations(
         show=show
     )
 
-    # Ensure adata has necessary annotations
-    adata_RNA.obsm['Arise_1Layer'] = best_embeddings
-    adata_RNA.obs['predicted_domain'] = pd.Categorical(best_labels.astype(str))
-
     # 2. 🗺️ Ground Truth vs Predicted Spatial Domains Plot
+    spatial_coords = adata_RNA.obsm.get('spatial', None)
     fig, axes = plt.subplots(1, 2, figsize=(15, 6.5))
-    sc.pl.spatial(
-        adata_RNA,
-        color='ground_truth',
-        spot_size=1.5,
-        ax=axes[0],
-        show=False,
-        title=f'Ground Truth ({dataset_name})'
-    )
-    sc.pl.spatial(
-        adata_RNA,
-        color='predicted_domain',
-        spot_size=1.5,
-        ax=axes[1],
-        show=False,
-        title=f'Arise 4-Encoder 1-Layer Domains (ARI: {ari:.4f})'
-    )
+
+    if spatial_coords is not None:
+        gt_cats = pd.Categorical(adata_RNA.obs['ground_truth'])
+        pred_cats = pd.Categorical(adata_RNA.obs['predicted_domain'])
+
+        axes[0].scatter(spatial_coords[:, 0], spatial_coords[:, 1], c=gt_cats.codes, cmap='tab20', s=10, alpha=0.9)
+        axes[0].set_title(f'Ground Truth ({dataset_name})', fontsize=12, fontweight='bold')
+        axes[0].set_xlabel('Spatial X')
+        axes[0].set_ylabel('Spatial Y')
+        axes[0].grid(False)
+
+        axes[1].scatter(spatial_coords[:, 0], spatial_coords[:, 1], c=pred_cats.codes, cmap='tab20', s=10, alpha=0.9)
+        axes[1].set_title(f'Arise 4-Encoder 1-Layer Domains (ARI: {ari:.4f})', fontsize=12, fontweight='bold')
+        axes[1].set_xlabel('Spatial X')
+        axes[1].set_ylabel('Spatial Y')
+        axes[1].grid(False)
+    else:
+        axes[0].text(0.5, 0.5, 'No Spatial Coordinates', ha='center', va='center')
+        axes[1].text(0.5, 0.5, 'No Spatial Coordinates', ha='center', va='center')
+
     plt.suptitle(f"Spatial Domains Comparison - {dataset_name} (Seed {seed})", fontsize=14, fontweight='bold', y=1.02)
     plt.tight_layout()
     spatial_path = os.path.join(plots_dir, "spatial", f"{dataset_name}_seed{seed}_spatial.png")
@@ -890,6 +901,7 @@ def run_experiment(
 
         anno_df = pd.read_csv(annotation_path, index_col=0)
         true_labels = anno_df[cfg["gt_col"]].values
+        adata_RNA.obs['ground_truth'] = pd.Categorical(true_labels)
         num_clusters = len(np.unique(true_labels))
         print(f"Dataset: {dataset_name} | Spots: {adata_RNA.n_obs} | Clusters: {num_clusters}")
 
@@ -964,6 +976,7 @@ def run_experiment(
                     dataset_name=dataset_name,
                     seed=seed,
                     rna_pca_comps=rna_pca_comps,
+                    true_labels=true_labels,
                     output_dir=output_dir,
                     show=show_plots
                 )

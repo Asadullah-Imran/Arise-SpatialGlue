@@ -1,0 +1,994 @@
+#!/usr/bin/env python3
+"""
+================================================================================
+  🧬 ARISE-Plus v2: Grand Champion Spatial Multi-Omics Pipeline
+================================================================================
+
+  Ablation Lineage & Synergistic Architectural Composition:
+  1. 📐 Multi-Order Graph Topology (V9):
+     3-Node Cliques (M3 = (A·A)⊙A) + 4-Node Cycles (M4 = (A·A·A)⊙A)
+  2. 🧬 Robust RNA-Anchored Scaffold Scaffold (V0):
+     Intersection topology G_comm = G_sim' ∩ G_dist transferring spatial fidelity
+  3. ⚡ Spatially-Constrained Cross-Attention Feature Exchange (V11):
+     Query-Key-Value attention masked by spatial Euclidean distance neighborhood
+  4. 🔗 Dense Relational Gram Matrix Alignment (V7):
+     Intra-cell Gram matrix Frobenius alignment (||G_rna - G_aux||_F / N^2)
+  5. 🌊 Entropic Sinkhorn Optimal Transport Relational Loss (V12):
+     Differentiable optimal transport manifold alignment across modalities
+  6. 🎯 Spatial Potts MRF-Regularized 2-Stage Consensus DEC (V14):
+     Student-t soft cluster assignments regularized with local spatial MRF consensus
+  7. ⚖️ Kendall & Gal Uncertainty Multi-Task Loss Balancing Engine:
+     Learnable log-variance precision parameters s_m = log(σ_m^2) for zero manual tuning
+
+  Authors: FYDP Research Team
+  Date: 2026
+================================================================================
+"""
+
+import os
+import sys
+import math
+import time
+import argparse
+import random
+import warnings
+from typing import Dict, Tuple, List, Optional
+
+import numpy as np
+import pandas as pd
+import scipy.sparse as sp
+import scanpy as sc
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch_geometric.data import Data
+from torch_geometric.nn import GCNConv
+from sklearn.cluster import KMeans
+from sklearn.neighbors import NearestNeighbors, kneighbors_graph
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics import (
+    adjusted_rand_score,
+    normalized_mutual_info_score,
+    adjusted_mutual_info_score,
+    homogeneity_score,
+    v_measure_score,
+    fowlkes_mallows_score,
+    silhouette_score,
+    silhouette_samples
+)
+import anndata as ad
+
+warnings.filterwarnings('ignore')
+
+# ----------------------------------------------------------------------
+# 1. REPRODUCIBILITY SEEDING
+# ----------------------------------------------------------------------
+
+def set_seed(seed: int = 42):
+    """Set global random seed for deterministic execution."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+    os.environ['PYTHONHASHSEED'] = str(seed)
+
+
+# ----------------------------------------------------------------------
+# 2. DATA PREPROCESSING & DATASET REGISTRY
+# ----------------------------------------------------------------------
+
+BENCHMARK_DATASETS = [
+    ("10x_human_lymph_node_A1", "https://drive.google.com/drive/folders/10z1N4MwW8Y49o8GlkYGBKVx1N7fiMuyC"),
+    ("10x_human_lymph_node_D1", "https://drive.google.com/drive/folders/1-g_Ca2XMaMXF-MisuVY-wobWDX86O6zz"),
+    ("Mouse_Brain_E11_S1", "https://drive.google.com/drive/folders/1zRwDJrYnks0LRzlAVRqPU7jE_OcStgPo"),
+    ("Mouse_Brain_E13_S1", "https://drive.google.com/drive/folders/1GOufwIRjjfcd9Bi2GKtebzKoPCg2jVud"),
+    ("Mouse_Brain_E15_S1", "https://drive.google.com/drive/folders/1rHkTL5OF5qPsEERypRGMS51SjUQ69tdD"),
+    ("Mouse_Brain_E18_S1", "https://drive.google.com/drive/folders/1Xj1LNIAY93biS6JIMKNRODn5GvtCKADB"),
+]
+
+def clr_normalize_each_cell(adata, inplace=True):
+    def seurat_clr(x):
+        s = np.sum(np.log1p(x[x > 0]))
+        exp = np.exp(s / len(x))
+        return np.log1p(x / exp)
+
+    if not inplace:
+        adata = adata.copy()
+
+    adata.X = np.apply_along_axis(
+        seurat_clr, 1, (adata.X.toarray() if sp.issparse(adata.X) else np.array(adata.X))
+    )
+    return adata
+
+def pca(adata, use_reps=None, n_comps=10):
+    from sklearn.decomposition import PCA
+    pca_model = PCA(n_components=n_comps)
+    if use_reps is not None:
+        feat_pca = pca_model.fit_transform(adata.obsm[use_reps])
+    else:
+        feat_pca = pca_model.fit_transform(adata.X.toarray() if sp.issparse(adata.X) else adata.X)
+    return feat_pca
+
+def tfidf(X):
+    idf = X.shape[0] / (X.sum(axis=0) + 1e-10)
+    if sp.issparse(X):
+        tf = X.multiply(1 / (X.sum(axis=1) + 1e-10))
+        return sp.csr_matrix(tf.multiply(idf))
+    else:
+        tf = X / (X.sum(axis=1, keepdims=True) + 1e-10)
+        return tf * idf
+
+def preprocess_universal(adata_RNA, adata_omics2, dataset_name: str) -> Tuple[np.ndarray, np.ndarray]:
+    adata_RNA_copy = adata_RNA.copy()
+    sc.pp.filter_genes(adata_RNA_copy, min_cells=10)
+    try:
+        sc.pp.highly_variable_genes(adata_RNA_copy, flavor="seurat_v3", n_top_genes=3000)
+        sc.pp.normalize_total(adata_RNA_copy, target_sum=1e4)
+        sc.pp.log1p(adata_RNA_copy)
+        sc.pp.scale(adata_RNA_copy)
+    except Exception:
+        sc.pp.normalize_total(adata_RNA_copy, target_sum=1e4)
+        sc.pp.log1p(adata_RNA_copy)
+        sc.pp.highly_variable_genes(adata_RNA_copy, flavor="seurat", n_top_genes=3000)
+        sc.pp.scale(adata_RNA_copy)
+
+    RNA_expression = adata_RNA_copy[:, adata_RNA_copy.var['highly_variable']].X
+    if sp.issparse(RNA_expression):
+        RNA_expression = RNA_expression.toarray()
+
+    adata_omics2_copy = adata_omics2[adata_RNA.obs_names].copy()
+    if dataset_name.startswith("10x"):
+        adata_omics2_copy = clr_normalize_each_cell(adata_omics2_copy)
+        sc.pp.scale(adata_omics2_copy)
+        omics2_expression = adata_omics2_copy.X
+    else:
+        adata_omics2_copy.X = tfidf(adata_omics2_copy.X)
+        sc.pp.normalize_per_cell(adata_omics2_copy, counts_per_cell_after=1e4)
+        sc.pp.log1p(adata_omics2_copy)
+        n_comps = min(60, adata_omics2_copy.shape[1])
+        adata_omics2_copy.obsm['feat'] = pca(adata_omics2_copy, n_comps=n_comps)
+        omics2_expression = adata_omics2_copy.obsm['feat']
+
+    if sp.issparse(omics2_expression):
+        omics2_expression = omics2_expression.toarray()
+
+    return RNA_expression, omics2_expression
+
+def load_dataset(dataset_name: str, folder_url: str, base_data_dir: str = "data"):
+    base = os.path.join(base_data_dir, dataset_name)
+    os.makedirs(base, exist_ok=True)
+
+    rna_path = os.path.join(base, "adata_RNA.h5ad")
+    if dataset_name.startswith("10x"):
+        other_path = os.path.join(base, "adata_ADT.h5ad")
+        annotation_path = os.path.join(base, "annotation.csv")
+        gt_col = "manual-anno"
+    else:
+        other_path = os.path.join(base, "adata_ATAC.h5ad")
+        annotation_path = os.path.join(base, "anno.csv")
+        gt_col = "cluster"
+
+    if not (os.path.exists(rna_path) and os.path.exists(other_path) and os.path.exists(annotation_path)):
+        print(f"Downloading dataset files for {dataset_name}...")
+        os.system(f'gdown --folder "{folder_url}" --output "{base}"')
+
+    adata_rna = sc.read_h5ad(rna_path)
+    adata_other = sc.read_h5ad(other_path)
+    adata_rna.var_names_make_unique()
+    adata_other.var_names_make_unique()
+
+    anno_df = pd.read_csv(annotation_path, index_col=0)
+    adata_rna.obs['ground_truth'] = anno_df[gt_col]
+    adata_other.obs['ground_truth'] = anno_df[gt_col]
+
+    rna_data, aux_data = preprocess_universal(adata_rna, adata_other, dataset_name)
+    cell_positions = adata_rna.obsm['spatial']
+    num_clusters = adata_rna.obs['ground_truth'].nunique()
+
+    return adata_rna, rna_data, aux_data, cell_positions, num_clusters
+
+
+# ----------------------------------------------------------------------
+# 3. V9: MULTI-ORDER 3-NODE (M3) + 4-NODE (M4) MOTIF TOPOLOGY
+# ----------------------------------------------------------------------
+
+def compute_multi_order_motif_matrix(adj_sparse: sp.csr_matrix, k1: float = 1.0, k2: float = 0.5, k3: float = 0.25) -> sp.csr_matrix:
+    """
+    Computes both 3-node triangular cliques M3 and 4-node cycle/clique motifs M4:
+      M3 = (A . A) ⊙ A
+      M4 = (A . A . A) ⊙ A
+    """
+    A_bin = (adj_sparse > 0).astype(np.float32)
+    A2 = A_bin.dot(A_bin)
+    M3 = A2.multiply(A_bin).tocsr()
+    
+    A3 = A2.dot(A_bin)
+    M4 = A3.multiply(A_bin).tocsr()
+
+    max_m3 = M3.data.max() if len(M3.data) > 0 else 1.0
+    if max_m3 == 0: max_m3 = 1.0
+    M3_norm = M3 / max_m3
+
+    max_m4 = M4.data.max() if len(M4.data) > 0 else 1.0
+    if max_m4 == 0: max_m4 = 1.0
+    M4_norm = M4 / max_m4
+
+    motif_total = k1 * adj_sparse + k2 * M3_norm + k3 * M4_norm
+    return motif_total.tocsr()
+
+def build_multimodal_graph_v2(
+    x_rna: np.ndarray,
+    x_aux: np.ndarray,
+    cell_positions: np.ndarray,
+    device: str = 'cpu',
+    num_neighbors: int = 15
+) -> Data:
+    """
+    Constructs multi-modal spatial graphs with multi-order motif enrichment (V9),
+    RNA-anchored intersection scaffold (V0), and spatial adjacency masks (V11 & V14).
+    """
+    num_nodes = x_rna.shape[0]
+
+    # 1. Similarity Graph (Cosine kNN)
+    similarity_matrix = cosine_similarity(x_rna)
+    nbrs = NearestNeighbors(n_neighbors=num_neighbors + 1, metric='cosine').fit(x_rna)
+    _, indices = nbrs.kneighbors(x_rna)
+
+    adj_sim = np.zeros_like(similarity_matrix, dtype=np.float32)
+    for i in range(num_nodes):
+        for j in indices[i][1:]:
+            adj_sim[i, j] = 1.0
+            adj_sim[j, i] = 1.0
+
+    sim_sparse = sp.csr_matrix(adj_sim)
+    motif_sparse = compute_multi_order_motif_matrix(sim_sparse, k1=1.0, k2=0.5, k3=0.25)
+
+    sim_nonzero = motif_sparse.nonzero()
+    sim_edge_index = torch.tensor(np.array(sim_nonzero), dtype=torch.long).to(device)
+    sim_edge_weight = torch.tensor(np.array(motif_sparse[sim_nonzero]).flatten(), dtype=torch.float).to(device)
+
+    # 2. Spatial Euclidean Graph
+    knn_spatial = kneighbors_graph(cell_positions, n_neighbors=num_neighbors, mode='distance', include_self=False)
+    knn_spatial = knn_spatial.maximum(knn_spatial.T)
+
+    dist_edge_index = torch.tensor(knn_spatial.nonzero(), dtype=torch.long).to(device)
+    dist_edge_weight = torch.tensor(knn_spatial.data, dtype=torch.float).to(device)
+
+    # 3. Common Intersection Scaffold Graph (G_comm = G_sim ∩ G_dist)
+    sim_edges = set(zip(sim_edge_index[0].tolist(), sim_edge_index[1].tolist()))
+    dist_edges = set(zip(dist_edge_index[0].tolist(), dist_edge_index[1].tolist()))
+    common_edges = sim_edges.intersection(dist_edges)
+
+    if len(common_edges) == 0:
+        common_edge_index = dist_edge_index
+        common_edge_weight = torch.ones(dist_edge_index.shape[1], dtype=torch.float).to(device)
+    else:
+        common_edge_index = torch.tensor(list(zip(*common_edges)), dtype=torch.long).to(device)
+        common_edge_weight = torch.ones(common_edge_index.shape[1], dtype=torch.float).to(device)
+
+    # Dense Spatial Adjacency Matrix & Mask for Cross-Attention (V11) & Potts DEC (V14)
+    spatial_adj = torch.zeros((num_nodes, num_nodes), dtype=torch.float, device=device)
+    spatial_adj[dist_edge_index[0], dist_edge_index[1]] = 1.0
+    spatial_mask = spatial_adj.clone()
+    spatial_mask.fill_diagonal_(1.0)
+
+    x_RNA_tensor = torch.tensor(x_rna, dtype=torch.float).to(device)
+    x_ADT_tensor = torch.tensor(x_aux, dtype=torch.float).to(device)
+
+    data = Data(
+        x_RNA=x_RNA_tensor,
+        x_ADT=x_ADT_tensor,
+        sim_edge_index=sim_edge_index,
+        sim_edge_weight=sim_edge_weight,
+        dist_edge_index=dist_edge_index,
+        dist_edge_weight=dist_edge_weight,
+        common_edge_index=common_edge_index,
+        common_edge_weight=common_edge_weight
+    )
+    data.spatial_mask = spatial_mask
+    data.spatial_adj = spatial_adj
+    return data
+
+
+# ----------------------------------------------------------------------
+# 4. V11: SPATIAL GRAPH-MASKED CROSS-ATTENTION MODULE
+# ----------------------------------------------------------------------
+
+class GraphMaskedCrossAttention(nn.Module):
+    """
+    Spatially-constrained cross-modal multi-head attention where RNA queries
+    attend exclusively over 1-hop spatial graph neighbor keys in the auxiliary modality.
+    """
+    def __init__(self, d_model: int = 64, n_heads: int = 4, dropout: float = 0.1):
+        super().__init__()
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.head_dim = d_model // n_heads
+        assert d_model % n_heads == 0, "d_model must be divisible by n_heads"
+
+        self.q_proj = nn.Linear(d_model, d_model)
+        self.k_proj = nn.Linear(d_model, d_model)
+        self.v_proj = nn.Linear(d_model, d_model)
+        self.out_proj = nn.Linear(d_model, d_model)
+        self.dropout = nn.Dropout(dropout)
+        self.layer_norm = nn.LayerNorm(d_model)
+
+    def forward(self, x_query: torch.Tensor, x_key_value: torch.Tensor, spatial_mask: torch.Tensor) -> torch.Tensor:
+        N, D = x_query.shape
+        residual = x_query
+
+        Q = self.q_proj(x_query).view(N, self.n_heads, self.head_dim).transpose(0, 1)
+        K = self.k_proj(x_key_value).view(N, self.n_heads, self.head_dim).transpose(0, 1)
+        V = self.v_proj(x_key_value).view(N, self.n_heads, self.head_dim).transpose(0, 1)
+
+        scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.head_dim)
+        mask_bool = (spatial_mask == 0).unsqueeze(0)
+        scores = scores.masked_fill(mask_bool, -1e9)
+
+        attn_weights = F.softmax(scores, dim=-1)
+        attn_weights = self.dropout(attn_weights)
+
+        context = torch.matmul(attn_weights, V)
+        context = context.transpose(0, 1).contiguous().view(N, D)
+        out = self.out_proj(context)
+
+        return self.layer_norm(residual + out)
+
+
+# ----------------------------------------------------------------------
+# 5. V12: SINKHORN OPTIMAL TRANSPORT RELATIONAL LOSS
+# ----------------------------------------------------------------------
+
+class SinkhornOptimalTransportLoss(nn.Module):
+    """
+    Differentiable Entropic Optimal Transport (Sinkhorn-Wasserstein distance)
+    aligning the geometric probability manifolds across RNA and Auxiliary modalities.
+    """
+    def __init__(self, eps: float = 0.1, max_iter: int = 30):
+        super().__init__()
+        self.eps = eps
+        self.max_iter = max_iter
+
+    def forward(self, z_rna: torch.Tensor, z_aux: torch.Tensor) -> torch.Tensor:
+        N = z_rna.shape[0]
+        z_rna_norm = F.normalize(z_rna, p=2, dim=1)
+        z_aux_norm = F.normalize(z_aux, p=2, dim=1)
+
+        C = 1.0 - torch.mm(z_rna_norm, z_aux_norm.t())
+        mu = torch.full((N,), 1.0 / N, device=z_rna.device, dtype=z_rna.dtype)
+        nu = torch.full((N,), 1.0 / N, device=z_aux.device, dtype=z_aux.dtype)
+
+        K = torch.exp(-C / self.eps)
+        u = torch.ones(N, device=z_rna.device, dtype=z_rna.dtype)
+
+        for _ in range(self.max_iter):
+            v = nu / (torch.matmul(K.t(), u) + 1e-8)
+            u = mu / (torch.matmul(K, v) + 1e-8)
+
+        T = u.unsqueeze(1) * K * v.unsqueeze(0)
+        return torch.sum(T * C)
+
+
+# ----------------------------------------------------------------------
+# 6. V14: SPATIAL POTTS / MRF-REGULARIZED DEC
+# ----------------------------------------------------------------------
+
+class SpatialPottsDEC(nn.Module):
+    """
+    Deep Embedding Clustering with Spatial Markov Random Field (Potts prior) regularization.
+    Smooths target distribution P using neighborhood cluster consensus to eliminate
+    salt-and-pepper spatial misclassifications.
+    """
+    def __init__(self, num_clusters: int, latent_dim: int, alpha: float = 1.0, lambda_spatial: float = 0.4):
+        super().__init__()
+        self.num_clusters = num_clusters
+        self.latent_dim = latent_dim
+        self.alpha = alpha
+        self.lambda_spatial = lambda_spatial
+        self.cluster_centers = nn.Parameter(torch.Tensor(num_clusters, latent_dim))
+        nn.init.xavier_uniform_(self.cluster_centers)
+
+    def compute_q(self, z: torch.Tensor) -> torch.Tensor:
+        dist = torch.sum((z.unsqueeze(1) - self.cluster_centers.unsqueeze(0)) ** 2, dim=2)
+        q = 1.0 / (1.0 + dist / self.alpha)
+        q = q ** ((self.alpha + 1.0) / 2.0)
+        q = q / torch.sum(q, dim=1, keepdim=True)
+        return q
+
+    def compute_spatial_target_p(self, q: torch.Tensor, spatial_adj: torch.Tensor) -> torch.Tensor:
+        weight = q ** 2 / (torch.sum(q, dim=0, keepdim=True) + 1e-8)
+        p_dec = weight / (torch.sum(weight, dim=1, keepdim=True) + 1e-8)
+
+        adj_norm = spatial_adj / (torch.sum(spatial_adj, dim=1, keepdim=True) + 1e-8)
+        spatial_consensus = torch.mm(adj_norm, q)
+
+        p_spatial = p_dec * torch.exp(self.lambda_spatial * spatial_consensus)
+        p_final = p_spatial / (torch.sum(p_spatial, dim=1, keepdim=True) + 1e-8)
+        return p_final
+
+    def forward(self, z: torch.Tensor, spatial_adj: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        q = self.compute_q(z)
+        p = self.compute_spatial_target_p(q.detach(), spatial_adj)
+        kl_loss = F.kl_div(q.log(), p, reduction='batchmean')
+        return q, kl_loss
+
+
+# ----------------------------------------------------------------------
+# 7. THE COMPLETE ARISE-PLUS-V2 GRAND CHAMPION MODEL
+# ----------------------------------------------------------------------
+
+class ARISEPlusV2ChampionModel(nn.Module):
+    """
+    🧬 ARISE-Plus v2:
+    - Multi-Order 3-Node + 4-Node Clique Topology (V9)
+    - RNA-Anchored Intersection Scaffold (V0)
+    - Spatial Graph-Masked Cross-Attention (V11)
+    - Dense Relational Gram Matrix Alignment (V7)
+    - Sinkhorn Entropic Optimal Transport Loss (V12)
+    - Spatial Potts MRF-Regularized 2-Stage Consensus DEC (V14)
+    - Adaptive Homoscedastic Multi-Task Loss Weighting (Kendall & Gal)
+    """
+    def __init__(
+        self,
+        in_rna_dim: int,
+        in_aux_dim: int,
+        num_clusters: int,
+        hidden_dim: int = 512,
+        out_dim: int = 64
+    ):
+        super().__init__()
+
+        # 1. Graph Convolutional Encoders
+        self.x_RNA1 = GCNConv(in_rna_dim, hidden_dim)
+        self.x_RNA2 = GCNConv(in_rna_dim, hidden_dim)
+        self.sim_conv = GCNConv(hidden_dim, out_dim)
+        self.dist_conv = GCNConv(hidden_dim, out_dim)
+        self.aux_conv = GCNConv(in_aux_dim, out_dim)
+
+        # 2. Intra-Omic Fusion
+        self.fusion1 = nn.Sequential(nn.Linear(2 * out_dim, out_dim))
+
+        # 3. Spatial Graph-Masked Cross-Attention (V11)
+        self.cross_attn = GraphMaskedCrossAttention(d_model=out_dim, n_heads=4, dropout=0.1)
+
+        # 4. Joint Inter-Omic Fusion
+        self.fusion2 = nn.Sequential(nn.Linear(2 * out_dim, out_dim))
+
+        # 5. Multi-Head Deconvolution Decoders
+        self.deconv1 = nn.Linear(out_dim, hidden_dim)
+        self.deconv_rna = nn.Linear(hidden_dim, in_rna_dim)
+        self.deconv_aux = nn.Linear(hidden_dim, in_aux_dim)
+        self.deconv_joint = nn.Linear(hidden_dim, in_rna_dim + in_aux_dim)
+
+        # 6. Geometric Alignment Objectives
+        self.ot_loss = SinkhornOptimalTransportLoss(eps=0.1, max_iter=30)
+        self.spatial_potts_dec = SpatialPottsDEC(num_clusters=num_clusters, latent_dim=out_dim, lambda_spatial=0.4)
+
+        # 7. Homoscedastic Multi-Task Uncertainty Parameters (s_0, s_1, s_2, s_3, s_4)
+        # Loss terms: [L_recon, L_spatial, L_dense, L_ot, L_dec]
+        self.log_vars = nn.Parameter(torch.zeros(5))
+
+    def set_cluster_centers(self, centers_np: np.ndarray):
+        dev = next(self.parameters()).device
+        self.spatial_potts_dec.cluster_centers.data = torch.tensor(centers_np, dtype=torch.float, device=dev)
+
+    def forward(self, data: Data, compute_q: bool = False) -> Dict[str, torch.Tensor]:
+        xs = F.relu(self.x_RNA1(data.x_RNA, data.sim_edge_index, data.sim_edge_weight))
+        x_sim = self.sim_conv(xs, data.sim_edge_index, data.sim_edge_weight)
+
+        xd = F.relu(self.x_RNA2(data.x_RNA, data.dist_edge_index, data.dist_edge_weight))
+        x_dist = self.dist_conv(xd, data.dist_edge_index, data.dist_edge_weight)
+
+        x_aux = self.aux_conv(data.x_ADT, data.common_edge_index, data.common_edge_weight)
+
+        # RNA intra-omic fusion
+        z_rna = self.fusion1(torch.cat([x_sim, x_dist], dim=1))
+
+        # Spatially-masked cross-attention (V11)
+        z_rna_refined = self.cross_attn(z_rna, x_aux, data.spatial_mask)
+
+        # Joint multi-modal latent representation
+        fused_joint = self.fusion2(torch.cat([z_rna_refined, x_aux], dim=1))
+
+        # DEC clustering distribution
+        q, kl_loss = None, None
+        if compute_q:
+            q, kl_loss = self.spatial_potts_dec(fused_joint, data.spatial_adj)
+
+        return {
+            'x_sim': x_sim,
+            'x_dist': x_dist,
+            'fused_rna': z_rna_refined,
+            'fused_aux': x_aux,
+            'x_aux': x_aux,
+            'fused_joint': fused_joint,
+            'embedding': fused_joint,
+            'q': q,
+            'kl_loss': kl_loss
+        }
+
+    def compute_loss(self, data: Data, outputs: Dict[str, torch.Tensor], stage: int = 1) -> Tuple[torch.Tensor, Dict[str, float]]:
+        num_nodes = data.x_RNA.shape[0]
+
+        # 1. Multi-Head Reconstruction Loss
+        l_rec = F.mse_loss(torch.cat([data.x_RNA, data.x_ADT], dim=1), self.deconv_joint(F.relu(self.deconv1(outputs['fused_joint']))))
+        l_sim = F.mse_loss(data.x_RNA, self.deconv_rna(F.relu(self.deconv1(outputs['x_sim']))))
+        l_dist = F.mse_loss(data.x_RNA, self.deconv_rna(F.relu(self.deconv1(outputs['x_dist']))))
+        l_aux = F.mse_loss(data.x_ADT, self.deconv_aux(F.relu(self.deconv1(outputs['x_aux']))))
+        total_recon = l_rec + l_sim + l_dist + l_aux
+
+        # 2. Spatial Regularization Contrastive Loss
+        graph_nei = data.spatial_adj
+        graph_neg = 1.0 - graph_nei
+        emb_norm = F.normalize(outputs['fused_rna'], p=2, dim=1, eps=1e-8)
+        sim_mat = torch.sigmoid(torch.matmul(emb_norm, emb_norm.T) - torch.diag_embed(torch.diag(torch.matmul(emb_norm, emb_norm.T))))
+        neigh_loss = torch.mul(graph_nei, torch.log(sim_mat + 1e-10)).mean()
+        neg_loss = torch.mul(graph_neg, torch.log(1.0 - sim_mat + 1e-10)).mean()
+        l_spatial = -(neigh_loss + neg_loss) / 2.0
+
+        # 3. Dense Cross-Modal Relational Gram Alignment Loss (V7)
+        l_emb = torch.mean((outputs['fused_joint'] - outputs['fused_rna']) ** 2) + torch.mean((outputs['fused_joint'] - outputs['fused_aux']) ** 2)
+        gram_r = torch.mm(outputs['fused_rna'], outputs['fused_rna'].t())
+        gram_a = torch.mm(outputs['fused_aux'], outputs['fused_aux'].t())
+        l_rel = torch.norm(gram_r - gram_a, p='fro') / (num_nodes * num_nodes)
+        l_dense = l_emb + 0.1 * l_rel
+
+        # 4. Sinkhorn Optimal Transport Loss (V12)
+        l_ot = self.ot_loss(outputs['fused_rna'], outputs['fused_aux'])
+
+        # Precision weights (exp(-s_m))
+        p0 = torch.exp(-self.log_vars[0])
+        p1 = torch.exp(-self.log_vars[1])
+        p2 = torch.exp(-self.log_vars[2])
+        p3 = torch.exp(-self.log_vars[3])
+        p4 = torch.exp(-self.log_vars[4])
+
+        total_loss = (0.5 * p0 * total_recon + 0.5 * self.log_vars[0] +
+                      0.5 * p1 * l_spatial + 0.5 * self.log_vars[1] +
+                      0.5 * p2 * l_dense + 0.5 * self.log_vars[2] +
+                      0.5 * p3 * l_ot + 0.5 * self.log_vars[3])
+
+        loss_dict = {
+            'loss_total': total_loss.item(),
+            'loss_recon': total_recon.item(),
+            'loss_spatial': l_spatial.item(),
+            'loss_dense': l_dense.item(),
+            'loss_ot': l_ot.item(),
+            'loss_kl': 0.0
+        }
+
+        # 5. Spatial Potts Consensus DEC KL Loss (V14)
+        if stage == 2 and outputs['kl_loss'] is not None:
+            l_kl = outputs['kl_loss']
+            total_loss = total_loss + 0.5 * p4 * l_kl + 0.5 * self.log_vars[4]
+            loss_dict['loss_kl'] = l_kl.item()
+            loss_dict['loss_total'] = total_loss.item()
+
+        return total_loss, loss_dict
+
+
+# ----------------------------------------------------------------------
+# 8. EVALUATION METRICS & VISUALIZATION
+# ----------------------------------------------------------------------
+
+def compute_all_metrics(y_true: np.ndarray, y_pred: np.ndarray, embeddings: Optional[np.ndarray] = None) -> Dict[str, float]:
+    y_true_str = np.asarray(y_true).astype(str)
+    y_pred_str = np.asarray(y_pred).astype(str)
+
+    ari = float(adjusted_rand_score(y_true_str, y_pred_str))
+    nmi = float(normalized_mutual_info_score(y_true_str, y_pred_str))
+    ami = float(adjusted_mutual_info_score(y_true_str, y_pred_str))
+    homo = float(homogeneity_score(y_true_str, y_pred_str))
+    v_meas = float(v_measure_score(y_true_str, y_pred_str))
+    fmi = float(fowlkes_mallows_score(y_true_str, y_pred_str))
+
+    sil = 0.0
+    if embeddings is not None and len(np.unique(y_pred_str)) > 1:
+        try:
+            sil = float(silhouette_score(embeddings, y_pred_str))
+        except Exception:
+            sil = 0.0
+
+    return {
+        'ARI': ari,
+        'NMI': nmi,
+        'AMI': ami,
+        'Homogeneity': homo,
+        'V-measure': v_meas,
+        'FMI': fmi,
+        'Silhouette': sil
+    }
+
+def run_kmeans_clustering(embeddings: np.ndarray, num_clusters: int, seed: int = 42) -> np.ndarray:
+    kmeans = KMeans(n_clusters=num_clusters, n_init=10, random_state=seed)
+    return kmeans.fit_predict(embeddings)
+
+def plot_spatial_domains(
+    cell_positions: np.ndarray,
+    ground_truth: np.ndarray,
+    pred_labels: np.ndarray,
+    dataset_name: str,
+    ari: float,
+    out_path: str
+):
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6), dpi=150)
+
+    # Ground Truth Plot
+    df_gt = pd.DataFrame({'x': cell_positions[:, 0], 'y': cell_positions[:, 1], 'label': ground_truth})
+    sns.scatterplot(
+        data=df_gt, x='x', y='y', hue='label', palette='tab20',
+        s=20, ax=axes[0], legend=False, edgecolor='none'
+    )
+    axes[0].set_title(f"Ground Truth Annotations ({dataset_name})", fontsize=12, fontweight='bold')
+    axes[0].axis('off')
+
+    # ARISE-Plus-v2 Predicted Domains
+    df_pred = pd.DataFrame({'x': cell_positions[:, 0], 'y': cell_positions[:, 1], 'label': [f"Domain {l}" for l in pred_labels]})
+    sns.scatterplot(
+        data=df_pred, x='x', y='y', hue='label', palette='tab20',
+        s=20, ax=axes[1], legend=False, edgecolor='none'
+    )
+    axes[1].set_title(f"ARISE-Plus v2 Predicted Domains (ARI: {ari:.4f})", fontsize=12, fontweight='bold', color='#2563eb')
+    axes[1].axis('off')
+
+    plt.tight_layout()
+    plt.savefig(out_path, bbox_inches='tight')
+    plt.close()
+    print(f"Saved spatial clustering plot to: {out_path}")
+
+def compute_umap_projection(
+    embeddings: np.ndarray,
+    n_neighbors: int = 15,
+    min_dist: float = 0.3,
+    random_state: int = 42
+) -> np.ndarray:
+    """Computes a 2D UMAP projection from high-dimensional latent embeddings."""
+    try:
+        temp_adata = ad.AnnData(X=embeddings.astype(np.float32))
+        sc.pp.neighbors(temp_adata, n_neighbors=n_neighbors, use_rep='X', random_state=random_state)
+        sc.tl.umap(temp_adata, min_dist=min_dist, random_state=random_state)
+        return temp_adata.obsm['X_umap']
+    except Exception:
+        try:
+            import umap
+            reducer = umap.UMAP(n_neighbors=n_neighbors, min_dist=min_dist, n_components=2, random_state=random_state)
+            return reducer.fit_transform(embeddings)
+        except Exception:
+            from sklearn.manifold import TSNE
+            return TSNE(n_components=2, random_state=random_state).fit_transform(embeddings)
+
+def plot_umap_and_silhouette(
+    embeddings: np.ndarray,
+    ground_truth: np.ndarray,
+    pred_labels: np.ndarray,
+    dataset_name: str,
+    metrics: Dict[str, float],
+    out_path: str,
+    seed: int = 42
+):
+    """
+    Generates a 4-panel diagnostic figure:
+      1. 2D UMAP colored by Ground Truth annotations
+      2. 2D UMAP colored by ARISE-Plus v2 Predicted Domains (with ARI & NMI metrics)
+      3. 2D UMAP colored continuously by Cell-Level Silhouette Coefficients (cohesion heatmap)
+      4. Per-Cluster Silhouette Coefficient Profile (Knife Plot) with Dataset Average line
+    """
+    umap_coords = compute_umap_projection(embeddings, n_neighbors=15, min_dist=0.3, random_state=seed)
+    sample_sil_values = silhouette_samples(embeddings, pred_labels)
+    avg_sil = metrics.get('Silhouette', float(silhouette_score(embeddings, pred_labels)))
+    ari = metrics.get('ARI', 0.0)
+    nmi = metrics.get('NMI', 0.0)
+
+    unique_preds = np.unique(pred_labels)
+    n_clusters = len(unique_preds)
+
+    fig, axes = plt.subplots(2, 2, figsize=(16, 13), dpi=150)
+
+    # 1. UMAP Ground Truth
+    gt_labels_str = [f"Class {g}" if isinstance(g, (int, np.integer)) else str(g) for g in ground_truth]
+    df_umap = pd.DataFrame({
+        'UMAP1': umap_coords[:, 0],
+        'UMAP2': umap_coords[:, 1],
+        'GT': gt_labels_str,
+        'Pred': [f"Domain {p}" for p in pred_labels],
+        'Sil': sample_sil_values
+    })
+
+    sns.scatterplot(
+        data=df_umap, x='UMAP1', y='UMAP2', hue='GT', palette='tab20',
+        s=25, ax=axes[0, 0], alpha=0.85, edgecolor='none'
+    )
+    axes[0, 0].set_title(f"UMAP Latent Space: Ground Truth ({dataset_name})", fontsize=12, fontweight='bold')
+    axes[0, 0].set_xlabel("UMAP 1", fontsize=10)
+    axes[0, 0].set_ylabel("UMAP 2", fontsize=10)
+    axes[0, 0].legend(bbox_to_anchor=(1.02, 1), loc='upper left', frameon=False, fontsize=8)
+
+    # 2. UMAP Predicted Domains
+    sns.scatterplot(
+        data=df_umap, x='UMAP1', y='UMAP2', hue='Pred', palette='tab20',
+        s=25, ax=axes[0, 1], alpha=0.85, edgecolor='none'
+    )
+    axes[0, 1].set_title(f"UMAP Latent Space: Predicted Domains (ARI: {ari:.4f} | NMI: {nmi:.4f})", fontsize=12, fontweight='bold', color='#2563eb')
+    axes[0, 1].set_xlabel("UMAP 1", fontsize=10)
+    axes[0, 1].set_ylabel("UMAP 2", fontsize=10)
+    axes[0, 1].legend(bbox_to_anchor=(1.02, 1), loc='upper left', frameon=False, fontsize=8)
+
+    # 3. UMAP Cell-Level Silhouette Heatmap
+    vmin = min(0.0, float(sample_sil_values.min()))
+    vmax = max(0.4, float(sample_sil_values.max()))
+    sc_plot = axes[1, 0].scatter(
+        umap_coords[:, 0], umap_coords[:, 1],
+        c=sample_sil_values, cmap='coolwarm', vmin=vmin, vmax=vmax,
+        s=25, alpha=0.85, edgecolor='none'
+    )
+    axes[1, 0].set_title(f"UMAP Latent Space: Cell Silhouette Quality (Mean: {avg_sil:.4f})", fontsize=12, fontweight='bold')
+    axes[1, 0].set_xlabel("UMAP 1", fontsize=10)
+    axes[1, 0].set_ylabel("UMAP 2", fontsize=10)
+    cbar = plt.colorbar(sc_plot, ax=axes[1, 0], fraction=0.046, pad=0.04)
+    cbar.set_label('Silhouette Coefficient (Cohesion / Separation)', fontsize=10)
+
+    # 4. Silhouette Knife (Profile) Plot
+    y_lower = 10
+    palette = sns.color_palette('tab20', n_clusters)
+    for idx, c_label in enumerate(unique_preds):
+        c_sil = sample_sil_values[pred_labels == c_label]
+        c_sil.sort()
+        size_c = c_sil.shape[0]
+        y_upper = y_lower + size_c
+        color = palette[idx % len(palette)]
+        axes[1, 1].fill_betweenx(
+            np.arange(y_lower, y_upper), 0, c_sil,
+            facecolor=color, edgecolor=color, alpha=0.75, label=f"Domain {c_label}"
+        )
+        axes[1, 1].text(-0.05, y_lower + 0.5 * size_c, str(c_label), fontsize=9, fontweight='bold', va='center')
+        y_lower = y_upper + 10
+
+    axes[1, 1].axvline(x=avg_sil, color='red', linestyle='--', linewidth=1.8, label=f"Mean Sil ({avg_sil:.4f})")
+    axes[1, 1].set_title(f"Per-Domain Silhouette Profile (Overall Sil: {avg_sil:.4f})", fontsize=12, fontweight='bold')
+    axes[1, 1].set_xlabel("Silhouette Coefficient Values", fontsize=10)
+    axes[1, 1].set_ylabel("Domain Clusters / Cells", fontsize=10)
+    axes[1, 1].set_yticks([])
+    axes[1, 1].set_xlim([min(-0.2, sample_sil_values.min() - 0.05), 1.0])
+    axes[1, 1].grid(True, linestyle=':', alpha=0.6)
+    axes[1, 1].legend(bbox_to_anchor=(1.02, 1), loc='upper left', frameon=False, fontsize=8)
+
+    plt.tight_layout()
+    plt.savefig(out_path, bbox_inches='tight')
+    plt.close()
+    print(f"Saved UMAP & Silhouette diagnostic report to: {out_path}")
+
+
+# ----------------------------------------------------------------------
+# 9. TRAINING & EXECUTION PIPELINE
+# ----------------------------------------------------------------------
+
+def train_and_evaluate_arise_plus_v2(
+    data: Data,
+    ground_truth: np.ndarray,
+    num_clusters: int,
+    epochs: int = 400,
+    pretrain_epochs: Optional[int] = None,
+    finetune_epochs: Optional[int] = None,
+    lr: float = 0.001,
+    seed: int = 42,
+    device: str = 'cuda',
+    verbose: bool = True
+) -> Tuple[Dict[str, float], np.ndarray, np.ndarray]:
+    start_time = time.time()
+    set_seed(seed)
+    dev = torch.device(device if torch.cuda.is_available() and device == 'cuda' else 'cpu')
+    data = data.to(dev)
+
+    in_rna_dim = data.x_RNA.shape[1]
+    in_aux_dim = data.x_ADT.shape[1]
+
+    model = ARISEPlusV2ChampionModel(
+        in_rna_dim=in_rna_dim,
+        in_aux_dim=in_aux_dim,
+        num_clusters=num_clusters,
+        hidden_dim=512,
+        out_dim=64
+    ).to(dev)
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+
+    if pretrain_epochs is None and finetune_epochs is None:
+        if epochs == 400:
+            pretrain_epochs = 250
+            finetune_epochs = 150
+        else:
+            pretrain_epochs = int(epochs * 0.625)
+            finetune_epochs = epochs - pretrain_epochs
+    elif pretrain_epochs is not None and finetune_epochs is None:
+        finetune_epochs = max(epochs - pretrain_epochs, 50)
+    elif finetune_epochs is not None and pretrain_epochs is None:
+        pretrain_epochs = max(epochs - finetune_epochs, 100)
+
+    best_embeddings = None
+    best_labels = None
+    best_sil = -1.0
+    best_epoch_sil = 0
+    best_stage_sil = "Pre-train"
+    best_ari_val = -1.0
+    best_epoch_ari = 0
+    best_stage_ari = "Pre-train"
+
+    # STAGE 1: Pre-training
+    model.train()
+    for epoch in range(pretrain_epochs):
+        optimizer.zero_grad()
+        outputs = model(data, compute_q=False)
+        loss, loss_dict = model.compute_loss(data, outputs, stage=1)
+        loss.backward()
+        optimizer.step()
+
+        model.eval()
+        with torch.no_grad():
+            eval_out = model(data, compute_q=False)
+            emb = eval_out['embedding'].detach().cpu().numpy()
+        model.train()
+
+        pred_labels = run_kmeans_clustering(emb, num_clusters, seed=seed)
+        metrics = compute_all_metrics(ground_truth, pred_labels, emb)
+        sil = metrics['Silhouette']
+        ari = metrics['ARI']
+
+        if sil > best_sil:
+            best_sil = sil
+            best_epoch_sil = epoch + 1
+            best_stage_sil = "Pre-train"
+            best_embeddings = emb.copy()
+            best_labels = pred_labels.copy()
+
+        if ari > best_ari_val:
+            best_ari_val = ari
+            best_epoch_ari = epoch + 1
+            best_stage_ari = "Pre-train"
+
+        if (epoch + 1) % 50 == 0 or epoch == 0 or epoch == pretrain_epochs - 1:
+            if verbose:
+                print(f"[ARISE-Plus-v2 | Seed {seed}] Pre-train Epoch {epoch+1:3d}/{pretrain_epochs} | Loss: {loss.item():.4f} | OT: {loss_dict['loss_ot']:.4f} | ARI: {metrics['ARI']:.4f} | NMI: {metrics['NMI']:.4f} | Sil: {sil:.4f}")
+
+    # CLUSTER PROTOTYPE INITIALIZATION
+    if verbose:
+        print(f"[ARISE-Plus-v2 | Seed {seed}] Initializing Cluster Centers from best pre-train representation (Epoch {best_epoch_sil})...")
+    kmeans = KMeans(n_clusters=num_clusters, random_state=seed, n_init=20).fit(best_embeddings)
+    model.set_cluster_centers(kmeans.cluster_centers_)
+
+    # STAGE 2: Spatial Potts Consensus DEC Fine-Tuning (V14)
+    model.train()
+    for epoch in range(finetune_epochs):
+        optimizer.zero_grad()
+        outputs = model(data, compute_q=True)
+        loss, loss_dict = model.compute_loss(data, outputs, stage=2)
+        loss.backward()
+        optimizer.step()
+
+        q = outputs['q'].detach()
+        pred_labels = torch.argmax(q, dim=1).cpu().numpy()
+        emb = outputs['embedding'].detach().cpu().numpy()
+
+        metrics = compute_all_metrics(ground_truth, pred_labels, emb)
+        sil = metrics['Silhouette']
+        ari = metrics['ARI']
+
+        if sil > best_sil:
+            best_sil = sil
+            best_epoch_sil = pretrain_epochs + epoch + 1
+            best_stage_sil = "DEC-Potts"
+            best_embeddings = emb.copy()
+            best_labels = pred_labels.copy()
+
+        if ari > best_ari_val:
+            best_ari_val = ari
+            best_epoch_ari = pretrain_epochs + epoch + 1
+            best_stage_ari = "DEC-Potts"
+
+        if (epoch + 1) % 50 == 0 or epoch == finetune_epochs - 1:
+            if verbose:
+                print(f"[ARISE-Plus-v2 | Seed {seed}] DEC Fine-tune Epoch {epoch+1:3d}/{finetune_epochs} | Loss: {loss.item():.4f} | KL: {loss_dict['loss_kl']:.4f} | ARI: {metrics['ARI']:.4f} | NMI: {metrics['NMI']:.4f} | Sil: {sil:.4f}")
+
+    elapsed_time = time.time() - start_time
+    final_metrics = compute_all_metrics(ground_truth, best_labels, best_embeddings)
+    final_metrics['Best_Epoch_Sil'] = best_epoch_sil
+    final_metrics['Best_Stage_Sil'] = best_stage_sil
+    final_metrics['Best_Epoch_ARI'] = best_epoch_ari
+    final_metrics['Best_Stage_ARI'] = best_stage_ari
+    final_metrics['Peak_ARI'] = float(best_ari_val)
+    final_metrics['Runtime_Sec'] = round(float(elapsed_time), 2)
+    return final_metrics, best_embeddings, best_labels
+
+
+# ----------------------------------------------------------------------
+# 10. CLI ENTRYPOINT
+# ----------------------------------------------------------------------
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="ARISE-Plus v2: Next-Gen Spatial Multi-Omics Pipeline")
+    parser.add_argument('--dataset', type=str, default='all', help="Dataset index (0-5), comma-separated list, or 'all'")
+    parser.add_argument('--data_dir', type=str, default='data', help="Local data directory")
+    parser.add_argument('--seeds', nargs='+', type=int, default=[42, 1234, 2024], help="Random seeds")
+    parser.add_argument('--epochs', type=int, default=400, help="Total epochs (default: 400 -> 250 pretrain, 150 DEC)")
+    parser.add_argument('--pretrain_epochs', type=int, default=None, help="Explicit pretrain epochs (default: 250)")
+    parser.add_argument('--finetune_epochs', type=int, default=None, help="Explicit DEC finetune epochs (default: 150)")
+    parser.add_argument('--lr', type=float, default=0.001, help="Learning rate")
+    parser.add_argument('--out_dir', type=str, default='results_arise_plus_v2', help="Output directory")
+    return parser.parse_args()
+
+def main():
+    args = parse_args()
+    os.makedirs(args.out_dir, exist_ok=True)
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    print("=" * 80)
+    print("  🧬 ARISE-Plus v2: Grand Champion Synergistic Spatial Multi-Omics Pipeline")
+    print(f"  Device: {device.upper()} | Seeds: {args.seeds} | Epochs: {args.epochs} (Pretrain: {args.pretrain_epochs or 250}, DEC: {args.finetune_epochs or 150}) | Output: {args.out_dir}")
+    print("=" * 80)
+
+    if args.dataset == 'all':
+        target_datasets = BENCHMARK_DATASETS
+    else:
+        indices = [int(i.strip()) for i in args.dataset.split(',') if i.strip().isdigit()]
+        target_datasets = [BENCHMARK_DATASETS[i] for i in indices if i < len(BENCHMARK_DATASETS)]
+
+    all_results = []
+    total_start_time = time.time()
+
+    for ds_idx, (ds_name, ds_url) in enumerate(target_datasets):
+        print(f"\n{'='*80}\n========== DATASET: {ds_name} (Index {ds_idx}) ==========\n{'='*80}")
+        adata_rna, rna_data, aux_data, cell_positions, num_clusters = load_dataset(ds_name, ds_url, args.data_dir)
+        ground_truth = np.array(adata_rna.obs['ground_truth'].astype('category').cat.codes)
+
+        # Build Graph Data with Multi-Order Motif Adjacency & RNA-Anchored Intersection Scaffold
+        graph_data = build_multimodal_graph_v2(rna_data, aux_data, cell_positions, device=device, num_neighbors=15)
+
+        for seed in args.seeds:
+            metrics, final_emb, pred_labels = train_and_evaluate_arise_plus_v2(
+                graph_data, ground_truth, num_clusters,
+                epochs=args.epochs,
+                pretrain_epochs=args.pretrain_epochs,
+                finetune_epochs=args.finetune_epochs,
+                lr=args.lr, seed=seed, device=device
+            )
+
+            res_row = {'dataset': ds_name, 'seed': seed, **metrics}
+            all_results.append(res_row)
+            print(f"[{ds_name} | ARISE-Plus-v2 | Seed {seed}] -> ARI: {metrics['ARI']:.4f} | NMI: {metrics['NMI']:.4f} | Sil: {metrics['Silhouette']:.4f} | Peak ARI: {metrics['Peak_ARI']:.4f} (Epoch {metrics['Best_Epoch_ARI']} [{metrics['Best_Stage_ARI']}]) | Best Sil (Epoch {metrics['Best_Epoch_Sil']} [{metrics['Best_Stage_Sil']}]) | Time: {metrics['Runtime_Sec']:.2f}s")
+
+            # Plot spatial clustering map and UMAP & Silhouette diagnostic report for the first seed
+            if seed == args.seeds[0]:
+                plot_path = os.path.join(args.out_dir, f"{ds_name}_spatial_domain_map.png")
+                plot_spatial_domains(cell_positions, ground_truth, pred_labels, ds_name, metrics['ARI'], plot_path)
+
+                umap_path = os.path.join(args.out_dir, f"{ds_name}_umap_silhouette_report.png")
+                plot_umap_and_silhouette(final_emb, ground_truth, pred_labels, ds_name, metrics, umap_path, seed=seed)
+
+    total_duration = time.time() - total_start_time
+
+    # Save CSV
+    df_res = pd.DataFrame(all_results)
+    csv_path = os.path.join(args.out_dir, "arise_plus_v2_metrics_summary.csv")
+    df_res.to_csv(csv_path, index=False)
+    print(f"\n[Done] Saved full metrics CSV to: {csv_path}")
+
+    # Summary Statistics
+    summary = df_res.groupby('dataset').agg({
+        'ARI': ['mean', 'std'],
+        'NMI': ['mean', 'std'],
+        'Silhouette': ['mean', 'std'],
+        'Peak_ARI': ['mean', 'max'],
+        'Runtime_Sec': ['mean', 'sum']
+    })
+    print("\n" + "#" * 80 + "\n#################### ARISE-PLUS-V2 RESULTS SUMMARY ####################\n" + "#" * 80)
+    print(summary)
+    print(f"\nTotal Pipeline Execution Time: {total_duration/60:.2f} minutes ({total_duration:.1f}s)")
+
+if __name__ == '__main__':
+    main()
