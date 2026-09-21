@@ -840,9 +840,14 @@ def train_model_plus_v2_motif_dec(
         if verbose and (epoch + 1) % 25 == 0:
             tqdm.write(f"DEC Ep {epoch + 1:3d}/{finetune_epochs} (Total {curr_epoch:3d}) | Total Loss: {loss.item():.4f} | KL: {loss_dict['loss_kl']:.4f} | Sil: {sil:.4f}{ari_str} | Best Sil: {best_sil:.4f}")
 
+    last_sil = epoch_sil_history[-1] if epoch_sil_history else 0.0
+    last_ari = epoch_ari_history[-1] if epoch_ari_history else 0.0
+
     return {
         'best_silhouette': best_sil,
         'best_epoch_silhouette': best_epoch_sil,
+        'last_sil': last_sil,
+        'last_ari': last_ari,
         'best_stage_silhouette': best_stage_sil,
         'best_ari': best_ari_val,
         'best_epoch_ari': best_epoch_ari,
@@ -1382,6 +1387,10 @@ def run_experiment(
             metrics['Peak_ARI_Epoch'] = results['best_epoch_ari']
             metrics['Peak_ARI_Stage'] = results['best_stage_ari']
             metrics['Runtime_Sec'] = round(runtime_sec, 2)
+            metrics['Best_Silhouette'] = best_sil
+            metrics['Last_Silhouette'] = results['last_sil']
+            metrics['Last_ARI'] = results['last_ari']
+            metrics['Total_Epochs'] = results['pretrain_epochs'] + results['finetune_epochs']
 
             all_records.append(metrics)
 
@@ -1390,6 +1399,7 @@ def run_experiment(
             print(f"   • Peak ARI      : {metrics['Peak_ARI']:.4f} (at Ep {metrics['Peak_ARI_Epoch']}, {metrics['Peak_ARI_Stage']})")
             print(f"   • NMI: {metrics['NMI']:.4f} | AMI: {metrics['AMI']:.4f} | FMI: {metrics['FMI']:.4f}")
             print(f"   • Silhouette    : {best_sil:.4f} | Runtime: {runtime_sec:.1f}s")
+            print(f"   • Last Epoch    : Sil {results['last_sil']:.4f} | ARI {results['last_ari']:.4f} (Epoch {results['pretrain_epochs'] + results['finetune_epochs']})")
 
             # 7. Visual Analytics Suite
             if visualize:

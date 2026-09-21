@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arise+SpatialGlue Benchmark Suite | 4-Model Comparative Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.78);
+            --bg-card-hover: rgba(31, 41, 55, 0.9);
+            --bg-glass: rgba(255, 255, 255, 0.03);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-accent: rgba(99, 102, 241, 0.35);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --text-dim: #6b7280;
+            --accent-blue: #3b82f6;
+            --accent-teal: #10b981;
+            --accent-purple: #8b5cf6;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --accent-cyan: #06b6d4;
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 35px -5px rgba(99, 102, 241, 0.25);
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --radius-xl: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.04) 0%, transparent 60%);
+            background-attachment: fixed;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Header / Hero */
+        .app-header {
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-subtle);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .brand-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-subtitle {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 400;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.5rem 1.1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .nav-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Banner */
+        .hero-banner {
+            background: linear-gradient(135deg, rgba(30, 27, 75, 0.6), rgba(15, 23, 42, 0.7));
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .hero-banner::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .hero-title-group h1 {
+            font-size: 1.85rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.3rem;
+        }
+
+        .hero-title-group p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            max-width: 850px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .stat-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dim);
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-main);
+        }
+
+        .stat-sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+
+        /* Interactive Filter Hub */
+        .filter-panel {
+            background: var(--bg-card);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-title {
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .filter-group label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
+        }
+
+        .filter-select, .search-input {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            padding: 0.65rem 0.9rem;
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .filter-select:focus, .search-input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-reset {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            padding: 0.45rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-reset:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        /* Model Badge / Pill */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.02em;
+        }
+
+        .badge-base { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-v2 { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-dec { background: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); }
+        .badge-motif { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        /* Section Layouts */
+        .section {
+            display: none;
+            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .section-desc {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 320px;
+            width: 100%;
+        }
+
+        /* Table Design */
+        .table-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            max-height: 650px;
+            position: relative;
+        }
+
+        table.benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        table.benchmark-table th {
+            background: rgba(15, 23, 42, 0.95);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            padding: 0.9rem 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+
+        table.benchmark-table th:hover {
+            background: rgba(30, 41, 59, 0.95);
+            color: var(--text-main);
+        }
+
+        table.benchmark-table th.sorted-asc::after {
+            content: " ▲";
+            color: #6366f1;
+        }
+
+        table.benchmark-table th.sorted-desc::after {
+            content: " ▼";
+            color: #6366f1;
+        }
+
+        table.benchmark-table td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+
+        table.benchmark-table tbody tr {
+            transition: background 0.15s ease;
+            cursor: pointer;
+        }
+
+        table.benchmark-table tbody tr:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .cell-bold {
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .cell-highlight-best {
+            color: #34d399;
+            font-weight: 700;
+            background: rgba(16, 185, 129, 0.08);
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+
+        .cell-highlight-peak {
+            color: #f59e0b;
+            font-weight: 700;
+            background: rgba(245, 158, 11, 0.08);
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+
+        .cell-subtext {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Matrix / Heatmap Grid */
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .matrix-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            position: relative;
+        }
+
+        .matrix-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 0.75rem;
+        }
+
+        .matrix-dataset-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #fff;
+        }
+
+        .matrix-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.55rem 0.5rem;
+            border-radius: 8px;
+            margin-bottom: 0.25rem;
+            transition: background 0.15s;
+        }
+
+        .matrix-row:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .matrix-winner {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .matrix-model-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .matrix-scores {
+            display: flex;
+            gap: 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .score-item {
+            text-align: right;
+        }
+
+        .score-val {
+            font-weight: 700;
+        }
+
+        .score-tag {
+            font-size: 0.68rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        /* Gallery & Visual Plots */
+        .gallery-filter-bar {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 0.5rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .gallery-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gallery-card:hover {
+            transform: translateY(-4px);
+            border-color: #6366f1;
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+
+        .gallery-img-wrap {
+            position: relative;
+            background: #000;
+            width: 100%;
+            height: 240px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gallery-img-wrap img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-card:hover .gallery-img-wrap img {
+            transform: scale(1.04);
+        }
+
+        .gallery-card-body {
+            padding: 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex-grow: 1;
+            background: rgba(17, 24, 39, 0.9);
+        }
+
+        .gallery-card-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .gallery-metrics-row {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Modal Lightbox */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(15px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            max-width: 1200px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            position: relative;
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .modal-body img {
+            max-width: 100%;
+            max-height: 65vh;
+            object-fit: contain;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .btn-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+
+        .btn-close:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        @media (max-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            .app-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+                padding: 1rem;
+            }
+            .header-nav {
+                width: 100%;
+                overflow-x: auto;
+            }
+            .container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="app-header">
+        <div class="header-brand">
+            <div class="brand-icon">SG</div>
+            <div>
+                <div class="brand-title">Arise+SpatialGlue Multi-Omics Benchmark</div>
+                <div class="brand-subtitle">4 Models × 6 Datasets × 3 Seeds (72 Total Experiments)</div>
+            </div>
+        </div>
+        <nav class="header-nav">
+            <button class="nav-btn active" onclick="switchTab('overview')">📊 Overview & Summary</button>
+            <button class="nav-btn" onclick="switchTab('deepdive')">🔬 In-Depth Analysis</button>
+            <button class="nav-btn" onclick="switchTab('metrics')">📋 Metric Tables</button>
+            <button class="nav-btn" onclick="switchTab('visuals')">🖼️ Visualizations & Plots</button>
+        </nav>
+    </header>
+
+    <div class="container">
+
+        <!-- Global Interactive Filter Bar -->
+        <div class="filter-panel">
+            <div class="filter-header">
+                <div class="filter-title">
+                    <span>⚡ Interactive Multi-Dimensional Filter</span>
+                    <span id="filter-count-badge" class="badge badge-base">72 / 72 Runs Active</span>
+                </div>
+                <button class="btn-reset" onclick="resetFilters()">🔄 Reset All Filters</button>
+            </div>
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Architecture / Model</label>
+                    <select id="filter-model" class="filter-select" onchange="applyFilters()">
+                        <option value="ALL">All 4 Models</option>
+                        <option value="base_4enc_1l">Baseline (4Enc-1L)</option>
+                        <option value="plus_v2">Plus V2 (Enhanced Fusion)</option>
+                        <option value="plus_v2_dec">Plus V2 + DEC (Potts)</option>
+                        <option value="plus_v2_motif_dec">Plus V2 + Motif + DEC</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Tissue / Dataset</label>
+                    <select id="filter-dataset" class="filter-select" onchange="applyFilters()">
+                        <option value="ALL">All 6 Datasets</option>
+                        <option value="10x_human_lymph_node_A1">10x Human Lymph Node A1</option>
+                        <option value="10x_human_lymph_node_D1">10x Human Lymph Node D1</option>
+                        <option value="Mouse_Brain_E11_S1">Mouse Brain E11 S1</option>
+                        <option value="Mouse_Brain_E13_S1">Mouse Brain E13 S1</option>
+                        <option value="Mouse_Brain_E15_S1">Mouse Brain E15 S1</option>
+                        <option value="Mouse_Brain_E18_S1">Mouse Brain E18 S1</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Random Seed</label>
+                    <select id="filter-seed" class="filter-select" onchange="applyFilters()">
+                        <option value="ALL">All Seeds (42, 1234, 2024)</option>
+                        <option value="42">Seed 42</option>
+                        <option value="1234">Seed 1234</option>
+                        <option value="2024">Seed 2024</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Sort Metric Order</label>
+                    <select id="filter-sort" class="filter-select" onchange="applyFilters()">
+                        <option value="peak_ari_desc">Peak ARI (High to Low)</option>
+                        <option value="best_sil_ari_desc">Best Sil ARI (High to Low)</option>
+                        <option value="last_ari_desc">Last Epoch ARI (High to Low)</option>
+                        <option value="best_sil_desc">Silhouette Score (High to Low)</option>
+                        <option value="nmi_desc">NMI Score (High to Low)</option>
+                        <option value="ami_desc">AMI Score (High to Low)</option>
+                        <option value="runtime_asc">Runtime (Fastest First)</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Quick Search</label>
+                    <input type="text" id="filter-search" class="search-input" placeholder="Search dataset, stage, seed..." oninput="applyFilters()">
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 1: OVERVIEW ================= -->
+        <section id="tab-overview" class="section active">
+            
+            <!-- Hero Stats -->
+            <div class="hero-banner">
+                <div class="hero-content">
+                    <div class="hero-header">
+                        <div class="hero-title-group">
+                            <h1>Benchmarking 4 SpatialGlue Architectural Evolutions</h1>
+                            <p>Comparative analysis tracking clustering resolution (ARI, NMI, AMI), spatial cohesion (Silhouette, CHI, DBI), and convergence dynamics across multi-omics developmental stages.</p>
+                        </div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">
+                                <span>Global Peak ARI</span>
+                                <span class="badge badge-v2">0.6122</span>
+                            </div>
+                            <div class="stat-value" id="stat-max-ari">0.6122</div>
+                            <div class="stat-sub">Plus V2 + Motif + DEC (E15_S1)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">
+                                <span>Max Silhouette Score</span>
+                                <span class="badge badge-dec">0.5284</span>
+                            </div>
+                            <div class="stat-value" id="stat-max-sil">0.5284</div>
+                            <div class="stat-sub">DEC-Potts Refinement (E15_S1)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">
+                                <span>Top Mean ARI Model</span>
+                                <span class="badge badge-v2">V2 Suite</span>
+                            </div>
+                            <div class="stat-value" id="stat-top-model">Plus V2</div>
+                            <div class="stat-sub">0.3873 Mean Peak ARI across all tissues</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">
+                                <span>Avg DEC Acceleration</span>
+                                <span class="badge badge-motif">-14.2%</span>
+                            </div>
+                            <div class="stat-value">121.4s</div>
+                            <div class="stat-sub">Faster convergence vs 140.5s baseline V2</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Performance Cards Matrix -->
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Model Architecture Hierarchy</h2>
+                    <p class="section-desc">Summary of the 4 models evaluated with overall aggregate performance</p>
+                </div>
+            </div>
+
+            <div class="matrix-grid" id="model-overview-cards">
+                <!-- Generated by JS -->
+            </div>
+
+            <!-- Global Comparison Charts -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">🏆 Mean Peak ARI Across Datasets</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-ari-comparison"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">✨ Silhouette Score Clustering Cohesion</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-sil-comparison"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dataset Winner Matrix -->
+            <div class="section-header" style="align-items: center;">
+                <div>
+                    <h2 class="section-title">Tissue-Specific Best Model Leaderboard</h2>
+                    <p class="section-desc">Rank and select optimal models per tissue dataset using customizable evaluation criteria</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: rgba(15, 23, 42, 0.7); padding: 0.5rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                    <label style="font-size: 0.78rem; font-weight: 700; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.04em;">🏆 Rank Leaderboard By:</label>
+                    <select id="leaderboard-metric-filter" class="filter-select" style="padding: 0.45rem 0.8rem; font-size: 0.82rem; min-width: 250px;" onchange="renderDatasetLeaderboard()">
+                        <option value="best_sil" selected>Best Silhouette Score and its corresponding ARI</option>
+                        <option value="last_sil">Last Epoch Silhouette Score and its corresponding ARI</option>
+                        <option value="peak_ari">Peak ARI score and its corresponding silhouette score</option>
+                    </select>
+                </div>
+            </div>
+            <div class="matrix-grid" id="dataset-leaderboard-matrix">
+                <!-- Generated by JS -->
+            </div>
+
+        </section>
+
+        <!-- ================= TAB 2: DEEP DIVE ================= -->
+        <section id="tab-deepdive" class="section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">🔬 In-Depth Clustering & Dynamics Analysis</h2>
+                    <p class="section-desc">Detailed breakdown of Peak ARI vs Last Epoch ARI vs Silhouette selection</p>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">📉 Peak ARI vs Best Sil ARI vs Last Epoch ARI (Dynamics & Overfitting)</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-ari-gap"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">⚡ Runtime Efficiency vs Peak Performance Frontier</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-runtime-frontier"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">🎯 NMI & AMI Information Gain Comparison</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-nmi-ami"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">📊 Calinski-Harabasz Index (Cluster Variance Ratio)</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-chi"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Findings & Insights Alert Box -->
+            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.8rem; color: #a5b4fc;">💡 Key Experimental Takeaways & Observations</h3>
+                <ul style="padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem; color: #e2e8f0;">
+                    <li><strong>Silhouette vs ARI Decoupling:</strong> While DEC models dramatically increase the internal cluster silhouette score (from ~0.30 up to 0.528 in E15_S1), biological ARI peaks earlier during pre-training/early Potts epochs (epochs 116-250), demonstrating that unsupervised cluster compaction does not always linearly correlate with manual anatomical annotations.</li>
+                    <li><strong>Lymph Node Sub-clustering:</strong> In both Human Lymph Node samples (A1 & D1), <em>Plus V2 + DEC / Motif DEC</em> achieved substantial improvements in ARI (+22% to +35% relative gain over Baseline 4Enc-1L), resolving fine follicular structures.</li>
+                    <li><strong>Motif DEC Efficiency:</strong> Adding spatial motif graph priors reduced runtime by ~13% compared to Plus V2 while preserving state-of-the-art peak ARI (0.6122 peak in E15_S1) and stabilizing seed variability.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ================= TAB 3: METRIC TABLES ================= -->
+        <section id="tab-metrics" class="section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">📋 Comprehensive Multi-Model Benchmark Table</h2>
+                    <p class="section-desc">Showing all 72 individual runs with sorting, column highlights, and full metric indicators</p>
+                </div>
+                <div style="display:flex; gap:0.5rem;">
+                    <button class="btn-reset" onclick="exportTableCSV()">📥 Export Filtered CSV</button>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table class="benchmark-table" id="main-data-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('model_short')">Model Architecture</th>
+                                <th onclick="sortTable('dataset')">Dataset / Tissue</th>
+                                <th onclick="sortTable('seed')">Seed</th>
+                                <th onclick="sortTable('peak_ari')">Peak ARI ⭐</th>
+                                <th onclick="sortTable('peak_ari_epoch')">Peak Epoch</th>
+                                <th onclick="sortTable('best_sil_ari')">Best Sil ARI</th>
+                                <th onclick="sortTable('last_ari')">Last Epoch ARI</th>
+                                <th onclick="sortTable('best_sil')">Silhouette (Best)</th>
+                                <th onclick="sortTable('nmi')">NMI</th>
+                                <th onclick="sortTable('ami')">AMI</th>
+                                <th onclick="sortTable('ch')">CHI</th>
+                                <th onclick="sortTable('db')">DBI</th>
+                                <th onclick="sortTable('runtime')">Runtime (s)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- Rows generated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 4: VISUAL PLOTS ================= -->
+        <section id="tab-visuals" class="section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">🖼️ Visual Inspection Gallery</h2>
+                    <p class="section-desc">Direct visual inspection of Spatial Domain mappings, UMAP silhouettes, Training curves, and Violin profiles</p>
+                </div>
+            </div>
+
+            <div class="gallery-filter-bar">
+                <button class="nav-btn active" id="plot-type-all" onclick="setPlotTypeFilter('ALL')">All Plot Types</button>
+                <button class="nav-btn" id="plot-type-spatial" onclick="setPlotTypeFilter('spatial')">🗺️ Spatial Domains</button>
+                <button class="nav-btn" id="plot-type-umap" onclick="setPlotTypeFilter('umap_silhouette')">🧬 UMAP & Silhouette</button>
+                <button class="nav-btn" id="plot-type-curves" onclick="setPlotTypeFilter('curves')">📈 Training Curves</button>
+                <button class="nav-btn" id="plot-type-violin" onclick="setPlotTypeFilter('violin')">🎻 Violin Profiles</button>
+            </div>
+
+            <div class="gallery-grid" id="gallery-container">
+                <!-- Generated by JS -->
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Modal Lightbox for Full-Res Image Viewing -->
+    <div class="modal-backdrop" id="image-modal" onclick="closeModal(event)">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <h3 id="modal-title" style="font-size: 1.1rem; font-weight:700;">Plot Detail</h3>
+                    <p id="modal-subtitle" style="font-size: 0.8rem; color: var(--text-muted);"></p>
+                </div>
+                <button class="btn-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <img id="modal-img" src="" alt="High Resolution Plot">
+                <div id="modal-details" style="width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                    <!-- Dynamic Details -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inject JSON Data -->
+    <script>
+        const BENCHMARK_DATA = {"models": [{"id": "base_4enc_1l", "key": "Baseline (4Enc-1L)", "folder": "AriseSpatialGlue_4Encoder_1Layer_Results", "name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "csv": "Arise4Encoder1Layer_all_results.csv", "color": "#3b82f6", "badge": "Baseline"}, {"id": "plus_v2", "key": "Plus V2", "folder": "AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results", "name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "csv": "Arise4Encoder1Layer_PlusV2_all_results.csv", "color": "#10b981", "badge": "V2 Enhanced"}, {"id": "plus_v2_dec", "key": "Plus V2 + DEC", "folder": "AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results", "name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "csv": "arise_4encoder_1layer_plus_v2_dec_results.csv", "color": "#8b5cf6", "badge": "DEC + Potts"}, {"id": "plus_v2_motif_dec", "key": "Plus V2 + Motif + DEC", "folder": "AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results", "name": "Arise SpatialGlue Plus V2 + Motif + DEC", "csv": "arise_4encoder_1layer_plus_v2_motif_dec_results.csv", "color": "#f59e0b", "badge": "Motif + DEC"}], "runs": [{"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "10x_human_lymph_node_A1", "seed": 42, "best_sil_ari": 0.1947, "peak_ari": 0.1947, "peak_ari_epoch": 17, "peak_stage": "Training", "last_ari": 0.294, "best_sil": 0.3187, "best_sil_epoch": 17, "best_sil_stage": "Training", "last_sil": 0.1432, "nmi": 0.3206, "ami": 0.3162, "homo": null, "vmeas": null, "fmi": null, "ch": 6485.41, "db": 0.9362, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/10x_human_lymph_node_A1_seed42_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/10x_human_lymph_node_A1_seed42_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/10x_human_lymph_node_A1_seed42_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/10x_human_lymph_node_A1_seed42_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "10x_human_lymph_node_A1", "seed": 1234, "best_sil_ari": 0.2626, "peak_ari": 0.2626, "peak_ari_epoch": 29, "peak_stage": "Training", "last_ari": 0.2946, "best_sil": 0.3088, "best_sil_epoch": 29, "best_sil_stage": "Training", "last_sil": 0.1376, "nmi": 0.4026, "ami": 0.3986, "homo": null, "vmeas": null, "fmi": null, "ch": 2381.1, "db": 1.0494, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/10x_human_lymph_node_A1_seed1234_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/10x_human_lymph_node_A1_seed1234_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/10x_human_lymph_node_A1_seed1234_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/10x_human_lymph_node_A1_seed1234_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "10x_human_lymph_node_A1", "seed": 2024, "best_sil_ari": 0.1994, "peak_ari": 0.1994, "peak_ari_epoch": 17, "peak_stage": "Training", "last_ari": 0.291, "best_sil": 0.3151, "best_sil_epoch": 17, "best_sil_stage": "Training", "last_sil": 0.1368, "nmi": 0.3393, "ami": 0.3351, "homo": null, "vmeas": null, "fmi": null, "ch": 4825.6, "db": 0.9568, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/10x_human_lymph_node_A1_seed2024_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/10x_human_lymph_node_A1_seed2024_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/10x_human_lymph_node_A1_seed2024_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/10x_human_lymph_node_A1_seed2024_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "10x_human_lymph_node_D1", "seed": 42, "best_sil_ari": 0.203, "peak_ari": 0.203, "peak_ari_epoch": 27, "peak_stage": "Training", "last_ari": 0.2123, "best_sil": 0.2306, "best_sil_epoch": 27, "best_sil_stage": "Training", "last_sil": 0.0928, "nmi": 0.347, "ami": 0.3417, "homo": null, "vmeas": null, "fmi": null, "ch": 1521.31, "db": 1.1871, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/10x_human_lymph_node_D1_seed42_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/10x_human_lymph_node_D1_seed42_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/10x_human_lymph_node_D1_seed42_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/10x_human_lymph_node_D1_seed42_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "10x_human_lymph_node_D1", "seed": 1234, "best_sil_ari": 0.173, "peak_ari": 0.173, "peak_ari_epoch": 19, "peak_stage": "Training", "last_ari": 0.2223, "best_sil": 0.2482, "best_sil_epoch": 19, "best_sil_stage": "Training", "last_sil": 0.078, "nmi": 0.3059, "ami": 0.3002, "homo": null, "vmeas": null, "fmi": null, "ch": 2200.13, "db": 1.1216, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/10x_human_lymph_node_D1_seed1234_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/10x_human_lymph_node_D1_seed1234_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/10x_human_lymph_node_D1_seed1234_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/10x_human_lymph_node_D1_seed1234_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "10x_human_lymph_node_D1", "seed": 2024, "best_sil_ari": 0.2167, "peak_ari": 0.2167, "peak_ari_epoch": 24, "peak_stage": "Training", "last_ari": 0.2236, "best_sil": 0.2687, "best_sil_epoch": 24, "best_sil_stage": "Training", "last_sil": 0.074, "nmi": 0.3372, "ami": 0.3317, "homo": null, "vmeas": null, "fmi": null, "ch": 1978.09, "db": 1.0696, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/10x_human_lymph_node_D1_seed2024_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/10x_human_lymph_node_D1_seed2024_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/10x_human_lymph_node_D1_seed2024_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/10x_human_lymph_node_D1_seed2024_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "Mouse_Brain_E11_S1", "seed": 42, "best_sil_ari": 0.4598, "peak_ari": 0.4598, "peak_ari_epoch": 24, "peak_stage": "Training", "last_ari": 0.4518, "best_sil": 0.3551, "best_sil_epoch": 24, "best_sil_stage": "Training", "last_sil": 0.2322, "nmi": 0.5142, "ami": 0.5086, "homo": null, "vmeas": null, "fmi": null, "ch": 920.39, "db": 1.0465, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/Mouse_Brain_E11_S1_seed42_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/Mouse_Brain_E11_S1_seed42_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/Mouse_Brain_E11_S1_seed42_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/Mouse_Brain_E11_S1_seed42_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "Mouse_Brain_E11_S1", "seed": 1234, "best_sil_ari": 0.4708, "peak_ari": 0.4708, "peak_ari_epoch": 26, "peak_stage": "Training", "last_ari": 0.5165, "best_sil": 0.3503, "best_sil_epoch": 26, "best_sil_stage": "Training", "last_sil": 0.233, "nmi": 0.5423, "ami": 0.5371, "homo": null, "vmeas": null, "fmi": null, "ch": 806.28, "db": 1.0389, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/Mouse_Brain_E11_S1_seed1234_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/Mouse_Brain_E11_S1_seed1234_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/Mouse_Brain_E11_S1_seed1234_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/Mouse_Brain_E11_S1_seed1234_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "Mouse_Brain_E11_S1", "seed": 2024, "best_sil_ari": 0.4718, "peak_ari": 0.4718, "peak_ari_epoch": 29, "peak_stage": "Training", "last_ari": 0.5111, "best_sil": 0.3417, "best_sil_epoch": 29, "best_sil_stage": "Training", "last_sil": 0.2296, "nmi": 0.5458, "ami": 0.5406, "homo": null, "vmeas": null, "fmi": null, "ch": 812.97, "db": 0.9992, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/Mouse_Brain_E11_S1_seed2024_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/Mouse_Brain_E11_S1_seed2024_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/Mouse_Brain_E11_S1_seed2024_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/Mouse_Brain_E11_S1_seed2024_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "Mouse_Brain_E13_S1", "seed": 42, "best_sil_ari": 0.224, "peak_ari": 0.224, "peak_ari_epoch": 24, "peak_stage": "Training", "last_ari": 0.2282, "best_sil": 0.2539, "best_sil_epoch": 24, "best_sil_stage": "Training", "last_sil": 0.1429, "nmi": 0.402, "ami": 0.3921, "homo": null, "vmeas": null, "fmi": null, "ch": 800.89, "db": 1.1302, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/Mouse_Brain_E13_S1_seed42_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/Mouse_Brain_E13_S1_seed42_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/Mouse_Brain_E13_S1_seed42_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/Mouse_Brain_E13_S1_seed42_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "Mouse_Brain_E13_S1", "seed": 1234, "best_sil_ari": 0.152, "peak_ari": 0.152, "peak_ari_epoch": 24, "peak_stage": "Training", "last_ari": 0.2551, "best_sil": 0.2528, "best_sil_epoch": 24, "best_sil_stage": "Training", "last_sil": 0.1488, "nmi": 0.3858, "ami": 0.3757, "homo": null, "vmeas": null, "fmi": null, "ch": 705.19, "db": 1.212, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/Mouse_Brain_E13_S1_seed1234_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/Mouse_Brain_E13_S1_seed1234_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/Mouse_Brain_E13_S1_seed1234_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/Mouse_Brain_E13_S1_seed1234_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "Mouse_Brain_E13_S1", "seed": 2024, "best_sil_ari": 0.1827, "peak_ari": 0.1827, "peak_ari_epoch": 20, "peak_stage": "Training", "last_ari": 0.2554, "best_sil": 0.2537, "best_sil_epoch": 20, "best_sil_stage": "Training", "last_sil": 0.1501, "nmi": 0.3466, "ami": 0.3357, "homo": null, "vmeas": null, "fmi": null, "ch": 1227.91, "db": 1.1509, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/Mouse_Brain_E13_S1_seed2024_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/Mouse_Brain_E13_S1_seed2024_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/Mouse_Brain_E13_S1_seed2024_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/Mouse_Brain_E13_S1_seed2024_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "Mouse_Brain_E15_S1", "seed": 42, "best_sil_ari": 0.5336, "peak_ari": 0.5336, "peak_ari_epoch": 29, "peak_stage": "Training", "last_ari": 0.5857, "best_sil": 0.3306, "best_sil_epoch": 29, "best_sil_stage": "Training", "last_sil": 0.2445, "nmi": 0.6186, "ami": 0.6128, "homo": null, "vmeas": null, "fmi": null, "ch": 805.12, "db": 0.8971, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/Mouse_Brain_E15_S1_seed42_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/Mouse_Brain_E15_S1_seed42_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/Mouse_Brain_E15_S1_seed42_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/Mouse_Brain_E15_S1_seed42_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "Mouse_Brain_E15_S1", "seed": 1234, "best_sil_ari": 0.5454, "peak_ari": 0.5454, "peak_ari_epoch": 19, "peak_stage": "Training", "last_ari": 0.5463, "best_sil": 0.3436, "best_sil_epoch": 19, "best_sil_stage": "Training", "last_sil": 0.2338, "nmi": 0.6107, "ami": 0.6048, "homo": null, "vmeas": null, "fmi": null, "ch": 1168.01, "db": 0.9208, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/Mouse_Brain_E15_S1_seed1234_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/Mouse_Brain_E15_S1_seed1234_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/Mouse_Brain_E15_S1_seed1234_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/Mouse_Brain_E15_S1_seed1234_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "Mouse_Brain_E15_S1", "seed": 2024, "best_sil_ari": 0.5229, "peak_ari": 0.5229, "peak_ari_epoch": 24, "peak_stage": "Training", "last_ari": 0.5885, "best_sil": 0.3394, "best_sil_epoch": 24, "best_sil_stage": "Training", "last_sil": 0.2496, "nmi": 0.5788, "ami": 0.5724, "homo": null, "vmeas": null, "fmi": null, "ch": 925.21, "db": 0.9085, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/Mouse_Brain_E15_S1_seed2024_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/Mouse_Brain_E15_S1_seed2024_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/Mouse_Brain_E15_S1_seed2024_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/Mouse_Brain_E15_S1_seed2024_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "Mouse_Brain_E18_S1", "seed": 42, "best_sil_ari": 0.3402, "peak_ari": 0.3402, "peak_ari_epoch": 21, "peak_stage": "Training", "last_ari": 0.5213, "best_sil": 0.2902, "best_sil_epoch": 21, "best_sil_stage": "Training", "last_sil": 0.203, "nmi": 0.5238, "ami": 0.5152, "homo": null, "vmeas": null, "fmi": null, "ch": 1359.42, "db": 1.0542, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/Mouse_Brain_E18_S1_seed42_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/Mouse_Brain_E18_S1_seed42_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/Mouse_Brain_E18_S1_seed42_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/Mouse_Brain_E18_S1_seed42_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "Mouse_Brain_E18_S1", "seed": 1234, "best_sil_ari": 0.4314, "peak_ari": 0.4314, "peak_ari_epoch": 25, "peak_stage": "Training", "last_ari": 0.4748, "best_sil": 0.2934, "best_sil_epoch": 25, "best_sil_stage": "Training", "last_sil": 0.1905, "nmi": 0.5758, "ami": 0.5682, "homo": null, "vmeas": null, "fmi": null, "ch": 1097.21, "db": 1.0796, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/Mouse_Brain_E18_S1_seed1234_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/Mouse_Brain_E18_S1_seed1234_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/Mouse_Brain_E18_S1_seed1234_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/Mouse_Brain_E18_S1_seed1234_violin.png"}}, {"model_id": "base_4enc_1l", "model_name": "Arise SpatialGlue 4-Encoder 1-Layer (Baseline)", "model_short": "Baseline (4Enc-1L)", "model_color": "#3b82f6", "model_badge": "Baseline", "dataset": "Mouse_Brain_E18_S1", "seed": 2024, "best_sil_ari": 0.2987, "peak_ari": 0.2987, "peak_ari_epoch": 17, "peak_stage": "Training", "last_ari": 0.4418, "best_sil": 0.2917, "best_sil_epoch": 17, "best_sil_stage": "Training", "last_sil": 0.1969, "nmi": 0.4826, "ami": 0.4732, "homo": null, "vmeas": null, "fmi": null, "ch": 1832.12, "db": 0.9947, "runtime": null, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/curves/Mouse_Brain_E18_S1_seed2024_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/spatial/Mouse_Brain_E18_S1_seed2024_spatial.png", "umap": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/umap/Mouse_Brain_E18_S1_seed2024_umap.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_Results/plots/violin/Mouse_Brain_E18_S1_seed2024_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "10x_human_lymph_node_A1", "seed": 42, "best_sil_ari": 0.2552, "peak_ari": 0.2694, "peak_ari_epoch": 109, "peak_stage": "Training", "last_ari": 0.2434, "best_sil": 0.3449, "best_sil_epoch": 53, "best_sil_stage": "Training", "last_sil": 0.2588, "nmi": 0.3983, "ami": 0.3945, "homo": null, "vmeas": null, "fmi": null, "ch": 4948.05, "db": 0.8732, "runtime": 210.99, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/10x_human_lymph_node_A1_seed42_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/10x_human_lymph_node_A1_seed42_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/10x_human_lymph_node_A1_seed42_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/10x_human_lymph_node_A1_seed42_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "10x_human_lymph_node_A1", "seed": 1234, "best_sil_ari": 0.2261, "peak_ari": 0.2551, "peak_ari_epoch": 208, "peak_stage": "Training", "last_ari": 0.2504, "best_sil": 0.3077, "best_sil_epoch": 47, "best_sil_stage": "Training", "last_sil": 0.2892, "nmi": 0.3849, "ami": 0.3811, "homo": null, "vmeas": null, "fmi": null, "ch": 2601.57, "db": 1.0229, "runtime": 215.19, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/10x_human_lymph_node_A1_seed1234_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/10x_human_lymph_node_A1_seed1234_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/10x_human_lymph_node_A1_seed1234_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/10x_human_lymph_node_A1_seed1234_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "10x_human_lymph_node_A1", "seed": 2024, "best_sil_ari": 0.2995, "peak_ari": 0.3138, "peak_ari_epoch": 141, "peak_stage": "Training", "last_ari": 0.2602, "best_sil": 0.2848, "best_sil_epoch": 53, "best_sil_stage": "Training", "last_sil": 0.2671, "nmi": 0.4219, "ami": 0.4181, "homo": null, "vmeas": null, "fmi": null, "ch": 3398.37, "db": 1.0435, "runtime": 211.39, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/10x_human_lymph_node_A1_seed2024_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/10x_human_lymph_node_A1_seed2024_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/10x_human_lymph_node_A1_seed2024_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/10x_human_lymph_node_A1_seed2024_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "10x_human_lymph_node_D1", "seed": 42, "best_sil_ari": 0.2076, "peak_ari": 0.2237, "peak_ari_epoch": 167, "peak_stage": "Training", "last_ari": 0.2072, "best_sil": 0.3153, "best_sil_epoch": 55, "best_sil_stage": "Training", "last_sil": 0.268, "nmi": 0.3808, "ami": 0.3758, "homo": null, "vmeas": null, "fmi": null, "ch": 3638.87, "db": 0.9962, "runtime": 209.67, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/10x_human_lymph_node_D1_seed42_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/10x_human_lymph_node_D1_seed42_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/10x_human_lymph_node_D1_seed42_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/10x_human_lymph_node_D1_seed42_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "10x_human_lymph_node_D1", "seed": 1234, "best_sil_ari": 0.2234, "peak_ari": 0.2318, "peak_ari_epoch": 75, "peak_stage": "Training", "last_ari": 0.1976, "best_sil": 0.2944, "best_sil_epoch": 68, "best_sil_stage": "Training", "last_sil": 0.2861, "nmi": 0.3714, "ami": 0.3663, "homo": null, "vmeas": null, "fmi": null, "ch": 2035.07, "db": 1.0879, "runtime": 212.05, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/10x_human_lymph_node_D1_seed1234_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/10x_human_lymph_node_D1_seed1234_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/10x_human_lymph_node_D1_seed1234_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/10x_human_lymph_node_D1_seed1234_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "10x_human_lymph_node_D1", "seed": 2024, "best_sil_ari": 0.2053, "peak_ari": 0.2267, "peak_ari_epoch": 153, "peak_stage": "Training", "last_ari": 0.2085, "best_sil": 0.3024, "best_sil_epoch": 48, "best_sil_stage": "Training", "last_sil": 0.2775, "nmi": 0.3495, "ami": 0.3443, "homo": null, "vmeas": null, "fmi": null, "ch": 2427.42, "db": 1.0436, "runtime": 213.03, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/10x_human_lymph_node_D1_seed2024_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/10x_human_lymph_node_D1_seed2024_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/10x_human_lymph_node_D1_seed2024_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/10x_human_lymph_node_D1_seed2024_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "Mouse_Brain_E11_S1", "seed": 42, "best_sil_ari": 0.3883, "peak_ari": 0.5098, "peak_ari_epoch": 153, "peak_stage": "Training", "last_ari": 0.4639, "best_sil": 0.3627, "best_sil_epoch": 32, "best_sil_stage": "Training", "last_sil": 0.2925, "nmi": 0.4458, "ami": 0.4395, "homo": null, "vmeas": null, "fmi": null, "ch": 1737.46, "db": 0.9565, "runtime": 76.4, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/Mouse_Brain_E11_S1_seed42_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/Mouse_Brain_E11_S1_seed42_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/Mouse_Brain_E11_S1_seed42_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/Mouse_Brain_E11_S1_seed42_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "Mouse_Brain_E11_S1", "seed": 1234, "best_sil_ari": 0.4664, "peak_ari": 0.4925, "peak_ari_epoch": 118, "peak_stage": "Training", "last_ari": 0.4332, "best_sil": 0.3494, "best_sil_epoch": 384, "best_sil_stage": "Training", "last_sil": 0.3372, "nmi": 0.5025, "ami": 0.4968, "homo": null, "vmeas": null, "fmi": null, "ch": 866.48, "db": 1.1441, "runtime": 74.75, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/Mouse_Brain_E11_S1_seed1234_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/Mouse_Brain_E11_S1_seed1234_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/Mouse_Brain_E11_S1_seed1234_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/Mouse_Brain_E11_S1_seed1234_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "Mouse_Brain_E11_S1", "seed": 2024, "best_sil_ari": 0.463, "peak_ari": 0.5112, "peak_ari_epoch": 114, "peak_stage": "Training", "last_ari": 0.4507, "best_sil": 0.3653, "best_sil_epoch": 30, "best_sil_stage": "Training", "last_sil": 0.3269, "nmi": 0.4773, "ami": 0.4713, "homo": null, "vmeas": null, "fmi": null, "ch": 1717.49, "db": 1.0259, "runtime": 77.02, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/Mouse_Brain_E11_S1_seed2024_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/Mouse_Brain_E11_S1_seed2024_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/Mouse_Brain_E11_S1_seed2024_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/Mouse_Brain_E11_S1_seed2024_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "Mouse_Brain_E13_S1", "seed": 42, "best_sil_ari": 0.1888, "peak_ari": 0.2327, "peak_ari_epoch": 32, "peak_stage": "Training", "last_ari": 0.1795, "best_sil": 0.2797, "best_sil_epoch": 397, "best_sil_stage": "Training", "last_sil": 0.2684, "nmi": 0.3989, "ami": 0.389, "homo": null, "vmeas": null, "fmi": null, "ch": 1065.94, "db": 1.2042, "runtime": 103.21, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/Mouse_Brain_E13_S1_seed42_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/Mouse_Brain_E13_S1_seed42_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/Mouse_Brain_E13_S1_seed42_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/Mouse_Brain_E13_S1_seed42_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "Mouse_Brain_E13_S1", "seed": 1234, "best_sil_ari": 0.1915, "peak_ari": 0.2244, "peak_ari_epoch": 141, "peak_stage": "Training", "last_ari": 0.1738, "best_sil": 0.2594, "best_sil_epoch": 69, "best_sil_stage": "Training", "last_sil": 0.2239, "nmi": 0.4084, "ami": 0.3987, "homo": null, "vmeas": null, "fmi": null, "ch": 831.51, "db": 1.2121, "runtime": 106.0, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/Mouse_Brain_E13_S1_seed1234_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/Mouse_Brain_E13_S1_seed1234_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/Mouse_Brain_E13_S1_seed1234_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/Mouse_Brain_E13_S1_seed1234_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "Mouse_Brain_E13_S1", "seed": 2024, "best_sil_ari": 0.2088, "peak_ari": 0.219, "peak_ari_epoch": 113, "peak_stage": "Training", "last_ari": 0.1757, "best_sil": 0.2416, "best_sil_epoch": 78, "best_sil_stage": "Training", "last_sil": 0.232, "nmi": 0.4352, "ami": 0.426, "homo": null, "vmeas": null, "fmi": null, "ch": 823.69, "db": 1.2105, "runtime": 106.31, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/Mouse_Brain_E13_S1_seed2024_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/Mouse_Brain_E13_S1_seed2024_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/Mouse_Brain_E13_S1_seed2024_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/Mouse_Brain_E13_S1_seed2024_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "Mouse_Brain_E15_S1", "seed": 42, "best_sil_ari": 0.5341, "peak_ari": 0.5558, "peak_ari_epoch": 368, "peak_stage": "Training", "last_ari": 0.5341, "best_sil": 0.3566, "best_sil_epoch": 400, "best_sil_stage": "Training", "last_sil": 0.3566, "nmi": 0.6365, "ami": 0.631, "homo": null, "vmeas": null, "fmi": null, "ch": 948.97, "db": 1.0846, "runtime": 110.17, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/Mouse_Brain_E15_S1_seed42_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/Mouse_Brain_E15_S1_seed42_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/Mouse_Brain_E15_S1_seed42_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/Mouse_Brain_E15_S1_seed42_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "Mouse_Brain_E15_S1", "seed": 1234, "best_sil_ari": 0.6014, "peak_ari": 0.6014, "peak_ari_epoch": 375, "peak_stage": "Training", "last_ari": 0.5592, "best_sil": 0.3812, "best_sil_epoch": 375, "best_sil_stage": "Training", "last_sil": 0.3465, "nmi": 0.634, "ami": 0.6285, "homo": null, "vmeas": null, "fmi": null, "ch": 1018.12, "db": 0.9876, "runtime": 110.69, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/Mouse_Brain_E15_S1_seed1234_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/Mouse_Brain_E15_S1_seed1234_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/Mouse_Brain_E15_S1_seed1234_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/Mouse_Brain_E15_S1_seed1234_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "Mouse_Brain_E15_S1", "seed": 2024, "best_sil_ari": 0.43, "peak_ari": 0.5569, "peak_ari_epoch": 285, "peak_stage": "Training", "last_ari": 0.3989, "best_sil": 0.319, "best_sil_epoch": 47, "best_sil_stage": "Training", "last_sil": 0.2732, "nmi": 0.5787, "ami": 0.5725, "homo": null, "vmeas": null, "fmi": null, "ch": 1379.29, "db": 1.051, "runtime": 109.63, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/Mouse_Brain_E15_S1_seed2024_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/Mouse_Brain_E15_S1_seed2024_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/Mouse_Brain_E15_S1_seed2024_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/Mouse_Brain_E15_S1_seed2024_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "Mouse_Brain_E18_S1", "seed": 42, "best_sil_ari": 0.4505, "peak_ari": 0.5001, "peak_ari_epoch": 153, "peak_stage": "Training", "last_ari": 0.3734, "best_sil": 0.2919, "best_sil_epoch": 69, "best_sil_stage": "Training", "last_sil": 0.1739, "nmi": 0.5792, "ami": 0.5716, "homo": null, "vmeas": null, "fmi": null, "ch": 1410.46, "db": 1.1978, "runtime": 126.47, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/Mouse_Brain_E18_S1_seed42_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/Mouse_Brain_E18_S1_seed42_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/Mouse_Brain_E18_S1_seed42_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/Mouse_Brain_E18_S1_seed42_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "Mouse_Brain_E18_S1", "seed": 1234, "best_sil_ari": 0.4107, "peak_ari": 0.5533, "peak_ari_epoch": 120, "peak_stage": "Training", "last_ari": 0.3355, "best_sil": 0.322, "best_sil_epoch": 53, "best_sil_stage": "Training", "last_sil": 0.1755, "nmi": 0.544, "ami": 0.5358, "homo": null, "vmeas": null, "fmi": null, "ch": 1211.11, "db": 1.1678, "runtime": 126.71, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/Mouse_Brain_E18_S1_seed1234_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/Mouse_Brain_E18_S1_seed1234_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/Mouse_Brain_E18_S1_seed1234_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/Mouse_Brain_E18_S1_seed1234_violin.png"}}, {"model_id": "plus_v2", "model_name": "Arise SpatialGlue Plus V2 (Enhanced Fusion/Loss)", "model_short": "Plus V2", "model_color": "#10b981", "model_badge": "V2 Enhanced", "dataset": "Mouse_Brain_E18_S1", "seed": 2024, "best_sil_ari": 0.4717, "peak_ari": 0.4797, "peak_ari_epoch": 95, "peak_stage": "Training", "last_ari": 0.3848, "best_sil": 0.2845, "best_sil_epoch": 91, "best_sil_stage": "Training", "last_sil": 0.1774, "nmi": 0.5961, "ami": 0.5887, "homo": null, "vmeas": null, "fmi": null, "ch": 1319.07, "db": 1.2188, "runtime": 128.69, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/curves/Mouse_Brain_E18_S1_seed2024_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/spatial/Mouse_Brain_E18_S1_seed2024_spatial.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/umap_silhouette/Mouse_Brain_E18_S1_seed2024_umap_silhouette_report.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Results/plots/violin/Mouse_Brain_E18_S1_seed2024_violin.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "10x_human_lymph_node_A1", "seed": 42, "best_sil_ari": 0.2455, "peak_ari": 0.285, "peak_ari_epoch": 251, "peak_stage": "DEC-Potts", "last_ari": 0.2455, "best_sil": 0.4019, "best_sil_epoch": 399, "best_sil_stage": "DEC-Potts", "last_sil": 0.4019, "nmi": 0.3888, "ami": 0.3853, "homo": 0.4313, "vmeas": 0.3888, "fmi": 0.3867, "ch": 6865.38, "db": 0.895, "runtime": 194.41, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/10x_human_lymph_node_A1_seed42_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/10x_human_lymph_node_A1_seed42_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/10x_human_lymph_node_A1_seed42_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/10x_human_lymph_node_A1_seed42_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "10x_human_lymph_node_A1", "seed": 1234, "best_sil_ari": 0.2719, "peak_ari": 0.2922, "peak_ari_epoch": 252, "peak_stage": "DEC-Potts", "last_ari": 0.2719, "best_sil": 0.4162, "best_sil_epoch": 399, "best_sil_stage": "DEC-Potts", "last_sil": 0.4162, "nmi": 0.4142, "ami": 0.4106, "homo": 0.4581, "vmeas": 0.4142, "fmi": 0.4109, "ch": 5788.57, "db": 0.8476, "runtime": 190.59, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/10x_human_lymph_node_A1_seed1234_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/10x_human_lymph_node_A1_seed1234_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/10x_human_lymph_node_A1_seed1234_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/10x_human_lymph_node_A1_seed1234_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "10x_human_lymph_node_A1", "seed": 2024, "best_sil_ari": 0.2776, "peak_ari": 0.3058, "peak_ari_epoch": 263, "peak_stage": "DEC-Potts", "last_ari": 0.2776, "best_sil": 0.3969, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.3969, "nmi": 0.4214, "ami": 0.4177, "homo": 0.4756, "vmeas": 0.4214, "fmi": 0.4141, "ch": 6352.63, "db": 0.8015, "runtime": 192.91, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/10x_human_lymph_node_A1_seed2024_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/10x_human_lymph_node_A1_seed2024_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/10x_human_lymph_node_A1_seed2024_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/10x_human_lymph_node_A1_seed2024_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "10x_human_lymph_node_D1", "seed": 42, "best_sil_ari": 0.2182, "peak_ari": 0.2617, "peak_ari_epoch": 251, "peak_stage": "DEC-Potts", "last_ari": 0.2182, "best_sil": 0.4465, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4465, "nmi": 0.3824, "ami": 0.3778, "homo": 0.4319, "vmeas": 0.3824, "fmi": 0.375, "ch": 7647.11, "db": 0.7174, "runtime": 194.58, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/10x_human_lymph_node_D1_seed42_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/10x_human_lymph_node_D1_seed42_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/10x_human_lymph_node_D1_seed42_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/10x_human_lymph_node_D1_seed42_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "10x_human_lymph_node_D1", "seed": 1234, "best_sil_ari": 0.2363, "peak_ari": 0.2731, "peak_ari_epoch": 251, "peak_stage": "DEC-Potts", "last_ari": 0.2363, "best_sil": 0.4437, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4437, "nmi": 0.3827, "ami": 0.3777, "homo": 0.4228, "vmeas": 0.3827, "fmi": 0.3946, "ch": 4873.14, "db": 0.8151, "runtime": 191.8, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/10x_human_lymph_node_D1_seed1234_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/10x_human_lymph_node_D1_seed1234_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/10x_human_lymph_node_D1_seed1234_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/10x_human_lymph_node_D1_seed1234_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "10x_human_lymph_node_D1", "seed": 2024, "best_sil_ari": 0.2078, "peak_ari": 0.2904, "peak_ari_epoch": 251, "peak_stage": "DEC-Potts", "last_ari": 0.2078, "best_sil": 0.4168, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4168, "nmi": 0.3662, "ami": 0.3615, "homo": 0.4177, "vmeas": 0.3662, "fmi": 0.3643, "ch": 6214.53, "db": 0.8256, "runtime": 193.83, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/10x_human_lymph_node_D1_seed2024_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/10x_human_lymph_node_D1_seed2024_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/10x_human_lymph_node_D1_seed2024_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/10x_human_lymph_node_D1_seed2024_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "Mouse_Brain_E11_S1", "seed": 42, "best_sil_ari": 0.4756, "peak_ari": 0.5043, "peak_ari_epoch": 242, "peak_stage": "Pre-train", "last_ari": 0.4756, "best_sil": 0.4056, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4056, "nmi": 0.5502, "ami": 0.5451, "homo": 0.6396, "vmeas": 0.5502, "fmi": 0.6033, "ch": 1601.04, "db": 0.9589, "runtime": 66.38, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/Mouse_Brain_E11_S1_seed42_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/Mouse_Brain_E11_S1_seed42_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/Mouse_Brain_E11_S1_seed42_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/Mouse_Brain_E11_S1_seed42_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "Mouse_Brain_E11_S1", "seed": 1234, "best_sil_ari": 0.392, "peak_ari": 0.5099, "peak_ari_epoch": 250, "peak_stage": "Pre-train", "last_ari": 0.392, "best_sil": 0.3306, "best_sil_epoch": 33, "best_sil_stage": "Pre-train", "last_sil": 0.3306, "nmi": 0.4501, "ami": 0.4439, "homo": 0.5235, "vmeas": 0.4501, "fmi": 0.5347, "ch": 1675.41, "db": 1.1078, "runtime": 66.06, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/Mouse_Brain_E11_S1_seed1234_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/Mouse_Brain_E11_S1_seed1234_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/Mouse_Brain_E11_S1_seed1234_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/Mouse_Brain_E11_S1_seed1234_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "Mouse_Brain_E11_S1", "seed": 2024, "best_sil_ari": 0.4793, "peak_ari": 0.5469, "peak_ari_epoch": 204, "peak_stage": "Pre-train", "last_ari": 0.4793, "best_sil": 0.3322, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.3322, "nmi": 0.5477, "ami": 0.5427, "homo": 0.6437, "vmeas": 0.5477, "fmi": 0.6069, "ch": 1698.73, "db": 1.1024, "runtime": 66.15, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/Mouse_Brain_E11_S1_seed2024_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/Mouse_Brain_E11_S1_seed2024_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/Mouse_Brain_E11_S1_seed2024_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/Mouse_Brain_E11_S1_seed2024_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "Mouse_Brain_E13_S1", "seed": 42, "best_sil_ari": 0.1907, "peak_ari": 0.2409, "peak_ari_epoch": 32, "peak_stage": "Pre-train", "last_ari": 0.1907, "best_sil": 0.4177, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4177, "nmi": 0.401, "ami": 0.3912, "homo": 0.4947, "vmeas": 0.401, "fmi": 0.3384, "ch": 2031.51, "db": 0.8369, "runtime": 92.28, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/Mouse_Brain_E13_S1_seed42_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/Mouse_Brain_E13_S1_seed42_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/Mouse_Brain_E13_S1_seed42_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/Mouse_Brain_E13_S1_seed42_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "Mouse_Brain_E13_S1", "seed": 1234, "best_sil_ari": 0.1863, "peak_ari": 0.2244, "peak_ari_epoch": 159, "peak_stage": "Pre-train", "last_ari": 0.1863, "best_sil": 0.408, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.408, "nmi": 0.3928, "ami": 0.3829, "homo": 0.485, "vmeas": 0.3928, "fmi": 0.3341, "ch": 2070.69, "db": 0.9439, "runtime": 91.37, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/Mouse_Brain_E13_S1_seed1234_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/Mouse_Brain_E13_S1_seed1234_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/Mouse_Brain_E13_S1_seed1234_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/Mouse_Brain_E13_S1_seed1234_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "Mouse_Brain_E13_S1", "seed": 2024, "best_sil_ari": 0.2304, "peak_ari": 0.243, "peak_ari_epoch": 253, "peak_stage": "DEC-Potts", "last_ari": 0.2304, "best_sil": 0.4154, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4154, "nmi": 0.4569, "ami": 0.448, "homo": 0.5617, "vmeas": 0.4569, "fmi": 0.3774, "ch": 2057.98, "db": 0.8739, "runtime": 89.48, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/Mouse_Brain_E13_S1_seed2024_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/Mouse_Brain_E13_S1_seed2024_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/Mouse_Brain_E13_S1_seed2024_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/Mouse_Brain_E13_S1_seed2024_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "Mouse_Brain_E15_S1", "seed": 42, "best_sil_ari": 0.4635, "peak_ari": 0.507, "peak_ari_epoch": 5, "peak_stage": "Pre-train", "last_ari": 0.4635, "best_sil": 0.5178, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.5178, "nmi": 0.6432, "ami": 0.6379, "homo": 0.6762, "vmeas": 0.6432, "fmi": 0.5457, "ch": 2084.56, "db": 0.6577, "runtime": 95.24, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/Mouse_Brain_E15_S1_seed42_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/Mouse_Brain_E15_S1_seed42_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/Mouse_Brain_E15_S1_seed42_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/Mouse_Brain_E15_S1_seed42_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "Mouse_Brain_E15_S1", "seed": 1234, "best_sil_ari": 0.4456, "peak_ari": 0.6093, "peak_ari_epoch": 107, "peak_stage": "Pre-train", "last_ari": 0.4456, "best_sil": 0.5245, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.5245, "nmi": 0.6271, "ami": 0.6215, "homo": 0.6581, "vmeas": 0.6271, "fmi": 0.5301, "ch": 2524.79, "db": 0.6293, "runtime": 97.48, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/Mouse_Brain_E15_S1_seed1234_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/Mouse_Brain_E15_S1_seed1234_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/Mouse_Brain_E15_S1_seed1234_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/Mouse_Brain_E15_S1_seed1234_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "Mouse_Brain_E15_S1", "seed": 2024, "best_sil_ari": 0.4367, "peak_ari": 0.5361, "peak_ari_epoch": 156, "peak_stage": "Pre-train", "last_ari": 0.4367, "best_sil": 0.4729, "best_sil_epoch": 399, "best_sil_stage": "DEC-Potts", "last_sil": 0.4729, "nmi": 0.6068, "ami": 0.6008, "homo": 0.6225, "vmeas": 0.6068, "fmi": 0.5243, "ch": 2032.83, "db": 0.7663, "runtime": 97.54, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/Mouse_Brain_E15_S1_seed2024_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/Mouse_Brain_E15_S1_seed2024_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/Mouse_Brain_E15_S1_seed2024_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/Mouse_Brain_E15_S1_seed2024_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "Mouse_Brain_E18_S1", "seed": 42, "best_sil_ari": 0.4097, "peak_ari": 0.4894, "peak_ari_epoch": 177, "peak_stage": "Pre-train", "last_ari": 0.4097, "best_sil": 0.3554, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.3554, "nmi": 0.6123, "ami": 0.6054, "homo": 0.6738, "vmeas": 0.6123, "fmi": 0.4989, "ch": 2593.57, "db": 0.9605, "runtime": 111.25, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/Mouse_Brain_E18_S1_seed42_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/Mouse_Brain_E18_S1_seed42_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/Mouse_Brain_E18_S1_seed42_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/Mouse_Brain_E18_S1_seed42_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "Mouse_Brain_E18_S1", "seed": 1234, "best_sil_ari": 0.4886, "peak_ari": 0.5025, "peak_ari_epoch": 346, "peak_stage": "DEC-Potts", "last_ari": 0.4886, "best_sil": 0.4305, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4305, "nmi": 0.6051, "ami": 0.598, "homo": 0.649, "vmeas": 0.6051, "fmi": 0.5654, "ch": 2802.35, "db": 0.8633, "runtime": 110.89, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/Mouse_Brain_E18_S1_seed1234_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/Mouse_Brain_E18_S1_seed1234_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/Mouse_Brain_E18_S1_seed1234_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/Mouse_Brain_E18_S1_seed1234_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_dec", "model_name": "Arise SpatialGlue Plus V2 + DEC (Deep Embedded Clustering + Potts)", "model_short": "Plus V2 + DEC", "model_color": "#8b5cf6", "model_badge": "DEC + Potts", "dataset": "Mouse_Brain_E18_S1", "seed": 2024, "best_sil_ari": 0.4258, "peak_ari": 0.5376, "peak_ari_epoch": 251, "peak_stage": "DEC-Potts", "last_ari": 0.4258, "best_sil": 0.3572, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.3572, "nmi": 0.6053, "ami": 0.5982, "homo": 0.656, "vmeas": 0.6053, "fmi": 0.511, "ch": 2602.93, "db": 1.0179, "runtime": 110.48, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/curves/Mouse_Brain_E18_S1_seed2024_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/spatial/Mouse_Brain_E18_S1_seed2024_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/umap_silhouette/Mouse_Brain_E18_S1_seed2024_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_dec_Results/plots/violin/Mouse_Brain_E18_S1_seed2024_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "10x_human_lymph_node_A1", "seed": 42, "best_sil_ari": 0.2494, "peak_ari": 0.2856, "peak_ari_epoch": 251, "peak_stage": "DEC-Potts", "last_ari": 0.2494, "best_sil": 0.4008, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4008, "nmi": 0.3882, "ami": 0.3847, "homo": 0.4306, "vmeas": 0.3882, "fmi": 0.3899, "ch": 6825.95, "db": 0.8784, "runtime": 188.07, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/10x_human_lymph_node_A1_seed42_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/10x_human_lymph_node_A1_seed42_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/10x_human_lymph_node_A1_seed42_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/10x_human_lymph_node_A1_seed42_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "10x_human_lymph_node_A1", "seed": 1234, "best_sil_ari": 0.2715, "peak_ari": 0.2896, "peak_ari_epoch": 251, "peak_stage": "DEC-Potts", "last_ari": 0.2715, "best_sil": 0.4281, "best_sil_epoch": 388, "best_sil_stage": "DEC-Potts", "last_sil": 0.4281, "nmi": 0.4161, "ami": 0.4124, "homo": 0.4601, "vmeas": 0.4161, "fmi": 0.4105, "ch": 5581.97, "db": 0.8994, "runtime": 190.65, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/10x_human_lymph_node_A1_seed1234_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/10x_human_lymph_node_A1_seed1234_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/10x_human_lymph_node_A1_seed1234_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/10x_human_lymph_node_A1_seed1234_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "10x_human_lymph_node_A1", "seed": 2024, "best_sil_ari": 0.2828, "peak_ari": 0.3034, "peak_ari_epoch": 261, "peak_stage": "DEC-Potts", "last_ari": 0.2828, "best_sil": 0.4059, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4059, "nmi": 0.4313, "ami": 0.4276, "homo": 0.4864, "vmeas": 0.4313, "fmi": 0.4187, "ch": 6363.46, "db": 0.7905, "runtime": 187.75, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/10x_human_lymph_node_A1_seed2024_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/10x_human_lymph_node_A1_seed2024_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/10x_human_lymph_node_A1_seed2024_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/10x_human_lymph_node_A1_seed2024_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "10x_human_lymph_node_D1", "seed": 42, "best_sil_ari": 0.2165, "peak_ari": 0.2606, "peak_ari_epoch": 251, "peak_stage": "DEC-Potts", "last_ari": 0.2165, "best_sil": 0.447, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.447, "nmi": 0.3807, "ami": 0.3761, "homo": 0.43, "vmeas": 0.3807, "fmi": 0.3735, "ch": 7641.81, "db": 0.7119, "runtime": 195.88, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/10x_human_lymph_node_D1_seed42_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/10x_human_lymph_node_D1_seed42_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/10x_human_lymph_node_D1_seed42_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/10x_human_lymph_node_D1_seed42_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "10x_human_lymph_node_D1", "seed": 1234, "best_sil_ari": 0.2126, "peak_ari": 0.2622, "peak_ari_epoch": 251, "peak_stage": "DEC-Potts", "last_ari": 0.2126, "best_sil": 0.443, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.443, "nmi": 0.3736, "ami": 0.3687, "homo": 0.4237, "vmeas": 0.3736, "fmi": 0.3692, "ch": 5501.2, "db": 0.6983, "runtime": 189.58, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/10x_human_lymph_node_D1_seed1234_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/10x_human_lymph_node_D1_seed1234_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/10x_human_lymph_node_D1_seed1234_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/10x_human_lymph_node_D1_seed1234_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "10x_human_lymph_node_D1", "seed": 2024, "best_sil_ari": 0.2352, "peak_ari": 0.2761, "peak_ari_epoch": 251, "peak_stage": "DEC-Potts", "last_ari": 0.2352, "best_sil": 0.4136, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4136, "nmi": 0.3836, "ami": 0.3787, "homo": 0.4264, "vmeas": 0.3836, "fmi": 0.3931, "ch": 4983.23, "db": 0.8613, "runtime": 191.53, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/10x_human_lymph_node_D1_seed2024_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/10x_human_lymph_node_D1_seed2024_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/10x_human_lymph_node_D1_seed2024_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/10x_human_lymph_node_D1_seed2024_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "Mouse_Brain_E11_S1", "seed": 42, "best_sil_ari": 0.4778, "peak_ari": 0.5057, "peak_ari_epoch": 239, "peak_stage": "Pre-train", "last_ari": 0.4778, "best_sil": 0.4073, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4073, "nmi": 0.5516, "ami": 0.5465, "homo": 0.6408, "vmeas": 0.5516, "fmi": 0.6051, "ch": 1593.5, "db": 0.9482, "runtime": 61.62, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/Mouse_Brain_E11_S1_seed42_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/Mouse_Brain_E11_S1_seed42_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/Mouse_Brain_E11_S1_seed42_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/Mouse_Brain_E11_S1_seed42_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "Mouse_Brain_E11_S1", "seed": 1234, "best_sil_ari": 0.3952, "peak_ari": 0.5141, "peak_ari_epoch": 150, "peak_stage": "Pre-train", "last_ari": 0.3952, "best_sil": 0.3338, "best_sil_epoch": 33, "best_sil_stage": "Pre-train", "last_sil": 0.3338, "nmi": 0.4525, "ami": 0.4463, "homo": 0.5258, "vmeas": 0.4525, "fmi": 0.5373, "ch": 1661.64, "db": 1.1071, "runtime": 61.53, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/Mouse_Brain_E11_S1_seed1234_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/Mouse_Brain_E11_S1_seed1234_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/Mouse_Brain_E11_S1_seed1234_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/Mouse_Brain_E11_S1_seed1234_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "Mouse_Brain_E11_S1", "seed": 2024, "best_sil_ari": 0.438, "peak_ari": 0.5503, "peak_ari_epoch": 181, "peak_stage": "Pre-train", "last_ari": 0.438, "best_sil": 0.325, "best_sil_epoch": 43, "best_sil_stage": "Pre-train", "last_sil": 0.325, "nmi": 0.4913, "ami": 0.4856, "homo": 0.576, "vmeas": 0.4913, "fmi": 0.5725, "ch": 1525.63, "db": 1.1305, "runtime": 61.26, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/Mouse_Brain_E11_S1_seed2024_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/Mouse_Brain_E11_S1_seed2024_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/Mouse_Brain_E11_S1_seed2024_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/Mouse_Brain_E11_S1_seed2024_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "Mouse_Brain_E13_S1", "seed": 42, "best_sil_ari": 0.194, "peak_ari": 0.2256, "peak_ari_epoch": 251, "peak_stage": "DEC-Potts", "last_ari": 0.194, "best_sil": 0.4157, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4157, "nmi": 0.4036, "ami": 0.3939, "homo": 0.4979, "vmeas": 0.4036, "fmi": 0.3417, "ch": 2010.02, "db": 0.8384, "runtime": 86.87, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/Mouse_Brain_E13_S1_seed42_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/Mouse_Brain_E13_S1_seed42_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/Mouse_Brain_E13_S1_seed42_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/Mouse_Brain_E13_S1_seed42_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "Mouse_Brain_E13_S1", "seed": 1234, "best_sil_ari": 0.1982, "peak_ari": 0.222, "peak_ari_epoch": 218, "peak_stage": "Pre-train", "last_ari": 0.1982, "best_sil": 0.403, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.403, "nmi": 0.4112, "ami": 0.4016, "homo": 0.5068, "vmeas": 0.4112, "fmi": 0.346, "ch": 1868.7, "db": 0.9847, "runtime": 86.87, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/Mouse_Brain_E13_S1_seed1234_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/Mouse_Brain_E13_S1_seed1234_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/Mouse_Brain_E13_S1_seed1234_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/Mouse_Brain_E13_S1_seed1234_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "Mouse_Brain_E13_S1", "seed": 2024, "best_sil_ari": 0.2303, "peak_ari": 0.2448, "peak_ari_epoch": 251, "peak_stage": "DEC-Potts", "last_ari": 0.2303, "best_sil": 0.4154, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4154, "nmi": 0.4564, "ami": 0.4475, "homo": 0.5609, "vmeas": 0.4564, "fmi": 0.3773, "ch": 2053.36, "db": 0.8619, "runtime": 86.23, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/Mouse_Brain_E13_S1_seed2024_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/Mouse_Brain_E13_S1_seed2024_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/Mouse_Brain_E13_S1_seed2024_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/Mouse_Brain_E13_S1_seed2024_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "Mouse_Brain_E15_S1", "seed": 42, "best_sil_ari": 0.4517, "peak_ari": 0.4853, "peak_ari_epoch": 181, "peak_stage": "Pre-train", "last_ari": 0.4517, "best_sil": 0.477, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.477, "nmi": 0.6387, "ami": 0.6334, "homo": 0.6839, "vmeas": 0.6387, "fmi": 0.5362, "ch": 2042.29, "db": 0.7289, "runtime": 90.51, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/Mouse_Brain_E15_S1_seed42_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/Mouse_Brain_E15_S1_seed42_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/Mouse_Brain_E15_S1_seed42_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/Mouse_Brain_E15_S1_seed42_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "Mouse_Brain_E15_S1", "seed": 1234, "best_sil_ari": 0.4557, "peak_ari": 0.6122, "peak_ari_epoch": 116, "peak_stage": "Pre-train", "last_ari": 0.4557, "best_sil": 0.4856, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4856, "nmi": 0.631, "ami": 0.6256, "homo": 0.6722, "vmeas": 0.631, "fmi": 0.5393, "ch": 2352.04, "db": 0.7219, "runtime": 91.79, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/Mouse_Brain_E15_S1_seed1234_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/Mouse_Brain_E15_S1_seed1234_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/Mouse_Brain_E15_S1_seed1234_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/Mouse_Brain_E15_S1_seed1234_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "Mouse_Brain_E15_S1", "seed": 2024, "best_sil_ari": 0.4364, "peak_ari": 0.5287, "peak_ari_epoch": 187, "peak_stage": "Pre-train", "last_ari": 0.4364, "best_sil": 0.4723, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4723, "nmi": 0.6076, "ami": 0.6016, "homo": 0.6242, "vmeas": 0.6076, "fmi": 0.5238, "ch": 2037.3, "db": 0.7763, "runtime": 93.88, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/Mouse_Brain_E15_S1_seed2024_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/Mouse_Brain_E15_S1_seed2024_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/Mouse_Brain_E15_S1_seed2024_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/Mouse_Brain_E15_S1_seed2024_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "Mouse_Brain_E18_S1", "seed": 42, "best_sil_ari": 0.4102, "peak_ari": 0.4858, "peak_ari_epoch": 217, "peak_stage": "Pre-train", "last_ari": 0.4102, "best_sil": 0.3545, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.3545, "nmi": 0.6101, "ami": 0.6031, "homo": 0.671, "vmeas": 0.6101, "fmi": 0.4992, "ch": 2609.76, "db": 0.9662, "runtime": 107.22, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/Mouse_Brain_E18_S1_seed42_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/Mouse_Brain_E18_S1_seed42_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/Mouse_Brain_E18_S1_seed42_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/Mouse_Brain_E18_S1_seed42_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "Mouse_Brain_E18_S1", "seed": 1234, "best_sil_ari": 0.4933, "peak_ari": 0.5048, "peak_ari_epoch": 331, "peak_stage": "DEC-Potts", "last_ari": 0.4933, "best_sil": 0.4249, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.4249, "nmi": 0.6085, "ami": 0.6014, "homo": 0.6526, "vmeas": 0.6085, "fmi": 0.5696, "ch": 2760.5, "db": 0.8683, "runtime": 106.49, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/Mouse_Brain_E18_S1_seed1234_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/Mouse_Brain_E18_S1_seed1234_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/Mouse_Brain_E18_S1_seed1234_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/Mouse_Brain_E18_S1_seed1234_pca60_violin_profiles.png"}}, {"model_id": "plus_v2_motif_dec", "model_name": "Arise SpatialGlue Plus V2 + Motif + DEC", "model_short": "Plus V2 + Motif + DEC", "model_color": "#f59e0b", "model_badge": "Motif + DEC", "dataset": "Mouse_Brain_E18_S1", "seed": 2024, "best_sil_ari": 0.4641, "peak_ari": 0.4756, "peak_ari_epoch": 103, "peak_stage": "Pre-train", "last_ari": 0.4641, "best_sil": 0.3828, "best_sil_epoch": 400, "best_sil_stage": "DEC-Potts", "last_sil": 0.3828, "nmi": 0.6177, "ami": 0.6108, "homo": 0.6652, "vmeas": 0.6177, "fmi": 0.5445, "ch": 2964.47, "db": 0.9544, "runtime": 106.85, "plots": {"curves": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/curves/Mouse_Brain_E18_S1_seed2024_pca60_training_curves.png", "spatial": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/spatial/Mouse_Brain_E18_S1_seed2024_pca60_spatial_domains.png", "umap_silhouette": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/umap_silhouette/Mouse_Brain_E18_S1_seed2024_pca60_umap_silhouette.png", "violin": "results/AriseSpatialGlue_4Encoder_1Layer_PlusV2_motif_dec_Results/plots/violin/Mouse_Brain_E18_S1_seed2024_pca60_violin_profiles.png"}}]};
+    </script>
+
+    <!-- Application Controller Logic -->
+    <script>
+        let currentTab = 'overview';
+        let activePlotType = 'ALL';
+        let sortColumn = 'peak_ari';
+        let sortDirection = 'desc';
+        let filteredRuns = [...BENCHMARK_DATA.runs];
+        let chartInstances = {};
+
+        const MODEL_COLORS = {
+            'base_4enc_1l': '#3b82f6',
+            'plus_v2': '#10b981',
+            'plus_v2_dec': '#8b5cf6',
+            'plus_v2_motif_dec': '#f59e0b'
+        };
+
+        const DATASET_LABELS = {
+            '10x_human_lymph_node_A1': 'Human Lymph A1',
+            '10x_human_lymph_node_D1': 'Human Lymph D1',
+            'Mouse_Brain_E11_S1': 'Mouse Brain E11',
+            'Mouse_Brain_E13_S1': 'Mouse Brain E13',
+            'Mouse_Brain_E15_S1': 'Mouse Brain E15',
+            'Mouse_Brain_E18_S1': 'Mouse Brain E18'
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderOverviewCards();
+            renderDatasetLeaderboard();
+            applyFilters();
+            initOverviewCharts();
+        });
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(tabId)) {
+                    b.classList.add('active');
+                } else if (b.getAttribute('onclick') && b.getAttribute('onclick').includes('switchTab')) {
+                    b.classList.remove('active');
+                }
+            });
+
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            const targetSection = document.getElementById('tab-' + tabId);
+            if (targetSection) targetSection.classList.add('active');
+
+            if (tabId === 'overview') {
+                setTimeout(initOverviewCharts, 50);
+            } else if (tabId === 'deepdive') {
+                setTimeout(initDeepDiveCharts, 50);
+            } else if (tabId === 'visuals') {
+                renderGallery();
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-model').value = 'ALL';
+            document.getElementById('filter-dataset').value = 'ALL';
+            document.getElementById('filter-seed').value = 'ALL';
+            document.getElementById('filter-sort').value = 'peak_ari_desc';
+            document.getElementById('filter-search').value = '';
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const mFilter = document.getElementById('filter-model').value;
+            const dFilter = document.getElementById('filter-dataset').value;
+            const sFilter = document.getElementById('filter-seed').value;
+            const sortVal = document.getElementById('filter-sort').value;
+            const searchVal = document.getElementById('filter-search').value.toLowerCase().trim();
+
+            filteredRuns = BENCHMARK_DATA.runs.filter(r => {
+                if (mFilter !== 'ALL' && r.model_id !== mFilter) return false;
+                if (dFilter !== 'ALL' && r.dataset !== dFilter) return false;
+                if (sFilter !== 'ALL' && r.seed.toString() !== sFilter) return false;
+                if (searchVal) {
+                    const matchText = `${r.model_name} ${r.model_short} ${r.dataset} ${r.seed} ${r.peak_stage}`.toLowerCase();
+                    if (!matchText.includes(searchVal)) return false;
+                }
+                return true;
+            });
+
+            const isDesc = sortVal.endsWith('desc');
+            const sortField = sortVal.replace('_desc', '').replace('_asc', '');
+            
+            filteredRuns.sort((a, b) => {
+                let vA = a[sortField] !== undefined && a[sortField] !== null ? a[sortField] : (isDesc ? -Infinity : Infinity);
+                let vB = b[sortField] !== undefined && b[sortField] !== null ? b[sortField] : (isDesc ? -Infinity : Infinity);
+                return isDesc ? vB - vA : vA - vB;
+            });
+
+            document.getElementById('filter-count-badge').innerText = `${filteredRuns.length} / 72 Runs Active`;
+
+            renderTable();
+            if (currentTab === 'visuals') renderGallery();
+            if (currentTab === 'overview') updateOverviewCharts();
+            if (currentTab === 'deepdive') initDeepDiveCharts();
+        }
+
+        function renderOverviewCards() {
+            const container = document.getElementById('model-overview-cards');
+            container.innerHTML = '';
+
+            BENCHMARK_DATA.models.forEach(m => {
+                const runs = BENCHMARK_DATA.runs.filter(r => r.model_id === m.id);
+                const peakAris = runs.map(r => r.peak_ari);
+                const sils = runs.map(r => r.best_sil);
+                const runtimes = runs.map(r => r.runtime).filter(v => v !== null);
+
+                const avgPeakAri = (peakAris.reduce((a,b)=>a+b,0)/peakAris.length).toFixed(4);
+                const maxPeakAri = Math.max(...peakAris).toFixed(4);
+                const avgSil = (sils.reduce((a,b)=>a+b,0)/sils.length).toFixed(4);
+                const avgRuntime = runtimes.length ? (runtimes.reduce((a,b)=>a+b,0)/runtimes.length).toFixed(1) + 's' : 'N/A';
+
+                const badgeClass = m.id.includes('base') ? 'badge-base' : m.id === 'plus_v2' ? 'badge-v2' : m.id === 'plus_v2_dec' ? 'badge-dec' : 'badge-motif';
+
+                container.innerHTML += `
+                    <div class="stat-card" style="border-left: 4px solid ${m.color};">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
+                            <div>
+                                <h3 style="font-size:1rem; font-weight:700;">${m.name}</h3>
+                                <span class="badge ${badgeClass}" style="margin-top:0.3rem;">${m.badge}</span>
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem; margin-top:0.75rem; font-family:'JetBrains Mono', monospace;">
+                            <div>
+                                <div style="font-size:0.7rem; color:var(--text-dim); text-transform:uppercase;">Mean Peak ARI</div>
+                                <div style="font-size:1.15rem; font-weight:700; color:#34d399;">${avgPeakAri}</div>
+                            </div>
+                            <div>
+                                <div style="font-size:0.7rem; color:var(--text-dim); text-transform:uppercase;">Max Peak ARI</div>
+                                <div style="font-size:1.15rem; font-weight:700; color:#f59e0b;">${maxPeakAri}</div>
+                            </div>
+                            <div>
+                                <div style="font-size:0.7rem; color:var(--text-dim); text-transform:uppercase;">Mean Silhouette</div>
+                                <div style="font-size:1.15rem; font-weight:700; color:#a78bfa;">${avgSil}</div>
+                            </div>
+                            <div>
+                                <div style="font-size:0.7rem; color:var(--text-dim); text-transform:uppercase;">Mean Runtime</div>
+                                <div style="font-size:1.15rem; font-weight:700; color:#9ca3af;">${avgRuntime}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderDatasetLeaderboard() {
+            const container = document.getElementById('dataset-leaderboard-matrix');
+            container.innerHTML = '';
+
+            const metricSelect = document.getElementById('leaderboard-metric-filter');
+            const rankMetric = metricSelect ? metricSelect.value : 'best_sil_ari';
+
+            const METRIC_CONFIG = {
+                'best_sil': {
+                    label: 'Best Silhouette Score and its corresponding ARI',
+                    shortTag: 'Best Silhouette',
+                    secTag: 'Best-Sil ARI',
+                    secField: 'best_sil_ari',
+                    badgeClass: 'badge-dec'
+                },
+                'last_sil': {
+                    label: 'Last Epoch Silhouette Score and its corresponding ARI',
+                    shortTag: 'Last-Epoch Sil',
+                    secTag: 'Last ARI',
+                    secField: 'last_ari',
+                    badgeClass: 'badge-dec'
+                },
+                'peak_ari': {
+                    label: 'Peak ARI score and its corresponding silhouette score',
+                    shortTag: 'Peak ARI',
+                    secTag: 'Best Sil',
+                    secField: 'best_sil',
+                    badgeClass: 'badge-motif'
+                }
+            };
+
+            const cfg = METRIC_CONFIG[rankMetric] || METRIC_CONFIG['best_sil'];
+            const datasets = ['10x_human_lymph_node_A1', '10x_human_lymph_node_D1', 'Mouse_Brain_E11_S1', 'Mouse_Brain_E13_S1', 'Mouse_Brain_E15_S1', 'Mouse_Brain_E18_S1'];
+
+            datasets.forEach(ds => {
+                const dsRuns = BENCHMARK_DATA.runs.filter(r => r.dataset === ds);
+                
+                const modelAgg = [];
+                BENCHMARK_DATA.models.forEach(m => {
+                    const mRuns = dsRuns.filter(r => r.model_id === m.id);
+                    const primaryVals = mRuns.map(r => r[rankMetric] !== undefined && r[rankMetric] !== null ? r[rankMetric] : 0);
+                    const secondaryVals = mRuns.map(r => r[cfg.secField] !== undefined && r[cfg.secField] !== null ? r[cfg.secField] : 0);
+
+                    const avgPrimary = primaryVals.reduce((a,b)=>a+b,0)/primaryVals.length;
+                    const maxPrimary = Math.max(...primaryVals);
+                    const avgSecondary = secondaryVals.reduce((a,b)=>a+b,0)/secondaryVals.length;
+
+                    modelAgg.push({
+                        model_id: m.id,
+                        short: m.key,
+                        color: m.color,
+                        avgPrimary,
+                        maxPrimary,
+                        avgSecondary
+                    });
+                });
+
+                // Sort models descending by the active filter metric
+                modelAgg.sort((a,b) => b.avgPrimary - a.avgPrimary);
+                const winner = modelAgg[0];
+
+                let rowsHtml = '';
+                modelAgg.forEach((m, idx) => {
+                    const isWinner = idx === 0;
+                    rowsHtml += `
+                        <div class="matrix-row ${isWinner ? 'matrix-winner' : ''}">
+                            <div class="matrix-model-name" style="color: ${m.color};">
+                                <span>${isWinner ? '👑' : '•'}</span> ${m.short}
+                            </div>
+                            <div class="matrix-scores">
+                                <div class="score-item">
+                                    <div class="score-val ${isWinner ? 'cell-highlight-peak' : ''}">${m.avgPrimary.toFixed(4)}</div>
+                                    <div class="score-tag">${cfg.shortTag}</div>
+                                </div>
+                                <div class="score-item">
+                                    <div class="score-val">${m.avgSecondary.toFixed(4)}</div>
+                                    <div class="score-tag">${cfg.secTag}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML += `
+                    <div class="matrix-card">
+                        <div class="matrix-header">
+                            <div>
+                                <div class="matrix-dataset-name">${DATASET_LABELS[ds] || ds}</div>
+                                <div style="font-size:0.75rem; color:var(--text-dim);">${ds}</div>
+                            </div>
+                            <span class="badge ${cfg.badgeClass}">Top: ${winner.short} (${winner.avgPrimary.toFixed(4)})</span>
+                        </div>
+                        <div>${rowsHtml}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            filteredRuns.forEach(r => {
+                const badgeClass = r.model_id.includes('base') ? 'badge-base' : r.model_id === 'plus_v2' ? 'badge-v2' : r.model_id === 'plus_v2_dec' ? 'badge-dec' : 'badge-motif';
+
+                const tr = document.createElement('tr');
+                tr.onclick = () => openRunModal(r);
+
+                tr.innerHTML = `
+                    <td>
+                        <span class="badge ${badgeClass}">${r.model_short}</span>
+                    </td>
+                    <td>
+                        <span class="cell-bold">${DATASET_LABELS[r.dataset] || r.dataset}</span>
+                        <span class="cell-subtext">${r.dataset}</span>
+                    </td>
+                    <td>${r.seed}</td>
+                    <td>
+                        <span class="cell-highlight-peak">${r.peak_ari.toFixed(4)}</span>
+                        <span class="cell-subtext">Stage: ${r.peak_stage}</span>
+                    </td>
+                    <td>${r.peak_ari_epoch}</td>
+                    <td>
+                        <span class="cell-highlight-best">${r.best_sil_ari.toFixed(4)}</span>
+                    </td>
+                    <td>${r.last_ari.toFixed(4)}</td>
+                    <td>
+                        <span style="color:#a78bfa; font-weight:600;">${r.best_sil.toFixed(4)}</span>
+                        <span class="cell-subtext">Ep ${r.best_sil_epoch}</span>
+                    </td>
+                    <td>${r.nmi.toFixed(4)}</td>
+                    <td>${r.ami.toFixed(4)}</td>
+                    <td>${r.ch ? r.ch.toFixed(1) : '-'}</td>
+                    <td>${r.db ? r.db.toFixed(3) : '-'}</td>
+                    <td>${r.runtime ? r.runtime.toFixed(1) + 's' : '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function sortTable(col) {
+            if (sortColumn === col) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = col;
+                sortDirection = 'desc';
+            }
+
+            document.querySelectorAll('table.benchmark-table th').forEach(th => {
+                th.classList.remove('sorted-asc', 'sorted-desc');
+            });
+
+            const thIndex = ['model_short', 'dataset', 'seed', 'peak_ari', 'peak_ari_epoch', 'best_sil_ari', 'last_ari', 'best_sil', 'nmi', 'ami', 'ch', 'db', 'runtime'].indexOf(col);
+            if (thIndex >= 0) {
+                const th = document.querySelectorAll('table.benchmark-table th')[thIndex];
+                if (th) th.classList.add(sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+            }
+
+            filteredRuns.sort((a, b) => {
+                let vA = a[col] !== undefined && a[col] !== null ? a[col] : (sortDirection === 'asc' ? Infinity : -Infinity);
+                let vB = b[col] !== undefined && b[col] !== null ? b[col] : (sortDirection === 'asc' ? Infinity : -Infinity);
+                if (typeof vA === 'string') {
+                    return sortDirection === 'asc' ? vA.localeCompare(vB) : vB.localeCompare(vA);
+                }
+                return sortDirection === 'asc' ? vA - vB : vB - vA;
+            });
+
+            renderTable();
+        }
+
+        function initOverviewCharts() {
+            const ctxAri = document.getElementById('chart-ari-comparison');
+            const ctxSil = document.getElementById('chart-sil-comparison');
+            if (!ctxAri || !ctxSil) return;
+
+            if (chartInstances.ari) chartInstances.ari.destroy();
+            if (chartInstances.sil) chartInstances.sil.destroy();
+
+            const datasets = ['10x_human_lymph_node_A1', '10x_human_lymph_node_D1', 'Mouse_Brain_E11_S1', 'Mouse_Brain_E13_S1', 'Mouse_Brain_E15_S1', 'Mouse_Brain_E18_S1'];
+            const labels = datasets.map(d => DATASET_LABELS[d]);
+
+            const ariDatasets = BENCHMARK_DATA.models.map(m => {
+                const data = datasets.map(ds => {
+                    const runs = BENCHMARK_DATA.runs.filter(r => r.model_id === m.id && r.dataset === ds);
+                    return runs.length ? +(runs.map(r => r.peak_ari).reduce((a,b)=>a+b,0)/runs.length).toFixed(4) : 0;
+                });
+                return {
+                    label: m.key,
+                    data: data,
+                    backgroundColor: m.color + 'cc',
+                    borderColor: m.color,
+                    borderWidth: 1,
+                    borderRadius: 6
+                };
+            });
+
+            chartInstances.ari = new Chart(ctxAri, {
+                type: 'bar',
+                data: { labels, datasets: ariDatasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { color: '#cbd5e1', font: { family: 'Plus Jakarta Sans', size: 11 } } },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#9ca3af' }, title: { display: true, text: 'Mean Peak ARI', color: '#9ca3af' } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+
+            const silDatasets = BENCHMARK_DATA.models.map(m => {
+                const data = datasets.map(ds => {
+                    const runs = BENCHMARK_DATA.runs.filter(r => r.model_id === m.id && r.dataset === ds);
+                    return runs.length ? +(runs.map(r => r.best_sil).reduce((a,b)=>a+b,0)/runs.length).toFixed(4) : 0;
+                });
+                return {
+                    label: m.key,
+                    data: data,
+                    borderColor: m.color,
+                    backgroundColor: m.color + '22',
+                    fill: true,
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointRadius: 4
+                };
+            });
+
+            chartInstances.sil = new Chart(ctxSil, {
+                type: 'line',
+                data: { labels, datasets: silDatasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { color: '#cbd5e1', font: { family: 'Plus Jakarta Sans', size: 11 } } },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#9ca3af' }, title: { display: true, text: 'Silhouette Score', color: '#9ca3af' } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+        }
+
+        function updateOverviewCharts() {
+            initOverviewCharts();
+        }
+
+        function initDeepDiveCharts() {
+            const ctxGap = document.getElementById('chart-ari-gap');
+            const ctxFrontier = document.getElementById('chart-runtime-frontier');
+            const ctxNmiAmi = document.getElementById('chart-nmi-ami');
+            const ctxChi = document.getElementById('chart-chi');
+
+            if (!ctxGap || !ctxFrontier) return;
+
+            if (chartInstances.gap) chartInstances.gap.destroy();
+            if (chartInstances.frontier) chartInstances.frontier.destroy();
+            if (chartInstances.nmiami) chartInstances.nmiami.destroy();
+            if (chartInstances.chi) chartInstances.chi.destroy();
+
+            const datasets = ['10x_human_lymph_node_A1', '10x_human_lymph_node_D1', 'Mouse_Brain_E11_S1', 'Mouse_Brain_E13_S1', 'Mouse_Brain_E15_S1', 'Mouse_Brain_E18_S1'];
+            const labels = datasets.map(d => DATASET_LABELS[d]);
+
+            chartInstances.gap = new Chart(ctxGap, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Peak ARI (Global Max)',
+                            data: datasets.map(ds => {
+                                const r = BENCHMARK_DATA.runs.filter(x => x.dataset === ds);
+                                return +(r.map(x=>x.peak_ari).reduce((a,b)=>a+b,0)/r.length).toFixed(4);
+                            }),
+                            backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Best Sil Epoch ARI',
+                            data: datasets.map(ds => {
+                                const r = BENCHMARK_DATA.runs.filter(x => x.dataset === ds);
+                                return +(r.map(x=>x.best_sil_ari).reduce((a,b)=>a+b,0)/r.length).toFixed(4);
+                            }),
+                            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Last Epoch ARI',
+                            data: datasets.map(ds => {
+                                const r = BENCHMARK_DATA.runs.filter(x => x.dataset === ds);
+                                return +(r.map(x=>x.last_ari).reduce((a,b)=>a+b,0)/r.length).toFixed(4);
+                            }),
+                            backgroundColor: 'rgba(139, 92, 246, 0.8)',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#9ca3af' } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+
+            const scatterData = BENCHMARK_DATA.models.map(m => {
+                const runs = BENCHMARK_DATA.runs.filter(r => r.model_id === m.id && r.runtime !== null);
+                return {
+                    label: m.key,
+                    backgroundColor: m.color,
+                    data: runs.map(r => ({ x: r.runtime, y: r.peak_ari, dataset: r.dataset, seed: r.seed })),
+                    pointRadius: 6,
+                    pointHoverRadius: 9
+                };
+            });
+
+            chartInstances.frontier = new Chart(ctxFrontier, {
+                type: 'scatter',
+                data: { datasets: scatterData },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    const pt = ctx.raw;
+                                    return `${ctx.dataset.label} (${pt.dataset} s${pt.seed}): ${pt.x}s, ARI: ${pt.y}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Execution Runtime (Seconds)', color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#9ca3af' } },
+                        y: { title: { display: true, text: 'Peak ARI Score', color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+
+            chartInstances.nmiami = new Chart(ctxNmiAmi, {
+                type: 'bar',
+                data: {
+                    labels: BENCHMARK_DATA.models.map(m => m.key),
+                    datasets: [
+                        {
+                            label: 'Mean NMI',
+                            data: BENCHMARK_DATA.models.map(m => {
+                                const r = BENCHMARK_DATA.runs.filter(x => x.model_id === m.id);
+                                return +(r.map(x=>x.nmi).reduce((a,b)=>a+b,0)/r.length).toFixed(4);
+                            }),
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Mean AMI',
+                            data: BENCHMARK_DATA.models.map(m => {
+                                const r = BENCHMARK_DATA.runs.filter(x => x.model_id === m.id);
+                                return +(r.map(x=>x.ami).reduce((a,b)=>a+b,0)/r.length).toFixed(4);
+                            }),
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#9ca3af' } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+
+            chartInstances.chi = new Chart(ctxChi, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: BENCHMARK_DATA.models.map(m => ({
+                        label: m.key,
+                        data: datasets.map(ds => {
+                            const r = BENCHMARK_DATA.runs.filter(x => x.model_id === m.id && x.dataset === ds);
+                            return r.length ? +(r.map(x=>x.ch).reduce((a,b)=>a+b,0)/r.length).toFixed(1) : 0;
+                        }),
+                        backgroundColor: m.color + 'aa',
+                        borderColor: m.color,
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#9ca3af' }, title: { display: true, text: 'Calinski-Harabasz Index (Higher = Denser Clusters)', color: '#9ca3af' } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+        }
+
+        function setPlotTypeFilter(type) {
+            activePlotType = type;
+            document.querySelectorAll('.gallery-filter-bar button').forEach(b => b.classList.remove('active'));
+            const btnId = type === 'ALL' ? 'plot-type-all' : 'plot-type-' + (type === 'umap_silhouette' ? 'umap' : type);
+            const activeBtn = document.getElementById(btnId);
+            if (activeBtn) activeBtn.classList.add('active');
+            renderGallery();
+        }
+
+        function renderGallery() {
+            const container = document.getElementById('gallery-container');
+            container.innerHTML = '';
+
+            let count = 0;
+            filteredRuns.forEach(r => {
+                const plots = r.plots || {};
+                for (const [pType, pPath] of Object.entries(plots)) {
+                    if (activePlotType !== 'ALL') {
+                        if (activePlotType === 'umap_silhouette' && !(pType === 'umap' || pType === 'umap_silhouette')) continue;
+                        if (activePlotType !== 'umap_silhouette' && pType !== activePlotType) continue;
+                    }
+
+                    count++;
+                    const typeLabel = pType === 'curves' ? '📈 Training Curve' :
+                                      pType === 'spatial' ? '🗺️ Spatial Domains' :
+                                      (pType === 'umap' || pType === 'umap_silhouette') ? '🧬 UMAP Silhouette' : '🎻 Violin Profiles';
+
+                    const card = document.createElement('div');
+                    card.className = 'gallery-card';
+                    card.onclick = () => openModal(pPath, `${r.model_short} — ${DATASET_LABELS[r.dataset] || r.dataset} (Seed ${r.seed})`, `${typeLabel} | Peak ARI: ${r.peak_ari} | Sil: ${r.best_sil}`, r);
+
+                    card.innerHTML = `
+                        <div class="gallery-img-wrap">
+                            <img src="${pPath}" loading="lazy" alt="${typeLabel}" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect fill=\'%23222\' width=\'100\' height=\'100\'/><text fill=\'%23666\' x=\'50%\' y=\'50%\' text-anchor=\'middle\'>Plot</text></svg>'">
+                        </div>
+                        <div class="gallery-card-body">
+                            <div class="gallery-card-title">
+                                <span style="font-size:0.85rem;">${DATASET_LABELS[r.dataset] || r.dataset}</span>
+                                <span class="badge" style="background:${r.model_color}22; color:${r.model_color}; border:1px solid ${r.model_color}44;">${r.model_short}</span>
+                            </div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); display:flex; justify-content:space-between;">
+                                <span>${typeLabel}</span>
+                                <span>Seed: ${r.seed}</span>
+                            </div>
+                            <div class="gallery-metrics-row">
+                                <span>Peak ARI: <b style="color:#f59e0b;">${r.peak_ari}</b></span>
+                                <span>Sil: <b style="color:#a78bfa;">${r.best_sil}</b></span>
+                                <span>NMI: <b style="color:#34d399;">${r.nmi}</b></span>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
+            });
+
+            if (count === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align:center; padding:3rem; color:var(--text-dim);">
+                        <h3>No visual plots matching the active filters.</h3>
+                        <p style="margin-top:0.5rem;">Try changing your model, dataset, or plot type selection.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function openModal(imgSrc, title, subtitle, runObj) {
+            const modal = document.getElementById('image-modal');
+            const img = document.getElementById('modal-img');
+            const titleEl = document.getElementById('modal-title');
+            const subEl = document.getElementById('modal-subtitle');
+            const detailsEl = document.getElementById('modal-details');
+
+            img.src = imgSrc;
+            titleEl.innerText = title;
+            subEl.innerText = subtitle;
+
+            if (runObj) {
+                detailsEl.innerHTML = `
+                    <div class="stat-card" style="padding:0.75rem;">
+                        <div class="stat-label">Peak ARI</div>
+                        <div style="font-size:1.2rem; font-weight:700; color:#f59e0b;">${runObj.peak_ari} (Ep ${runObj.peak_ari_epoch})</div>
+                    </div>
+                    <div class="stat-card" style="padding:0.75rem;">
+                        <div class="stat-label">Best Sil ARI</div>
+                        <div style="font-size:1.2rem; font-weight:700; color:#34d399;">${runObj.best_sil_ari}</div>
+                    </div>
+                    <div class="stat-card" style="padding:0.75rem;">
+                        <div class="stat-label">Last Epoch ARI</div>
+                        <div style="font-size:1.2rem; font-weight:700;">${runObj.last_ari}</div>
+                    </div>
+                    <div class="stat-card" style="padding:0.75rem;">
+                        <div class="stat-label">Silhouette Score</div>
+                        <div style="font-size:1.2rem; font-weight:700; color:#a78bfa;">${runObj.best_sil}</div>
+                    </div>
+                    <div class="stat-card" style="padding:0.75rem;">
+                        <div class="stat-label">NMI / AMI</div>
+                        <div style="font-size:1.2rem; font-weight:700;">${runObj.nmi} / ${runObj.ami}</div>
+                    </div>
+                    <div class="stat-card" style="padding:0.75rem;">
+                        <div class="stat-label">Runtime / Stage</div>
+                        <div style="font-size:1.2rem; font-weight:700;">${runObj.runtime ? runObj.runtime + 's' : 'N/A'} (${runObj.peak_stage})</div>
+                    </div>
+                `;
+            } else {
+                detailsEl.innerHTML = '';
+            }
+
+            modal.classList.add('open');
+        }
+
+        function openRunModal(r) {
+            const plotKey = r.plots.spatial ? 'spatial' : Object.keys(r.plots)[0];
+            const pPath = r.plots[plotKey];
+            if (pPath) {
+                openModal(pPath, `${r.model_name} (${r.dataset} s${r.seed})`, `Full Run Inspection`, r);
+            }
+        }
+
+        function closeModal(event) {
+            if (event && event.target !== event.currentTarget && !event.target.classList.contains('btn-close')) return;
+            document.getElementById('image-modal').classList.remove('open');
+        }
+
+        function exportTableCSV() {
+            if (!filteredRuns.length) return alert('No data to export!');
+            const headers = ['Model', 'Dataset', 'Seed', 'Peak_ARI', 'Peak_Epoch', 'Peak_Stage', 'Best_Sil_ARI', 'Last_ARI', 'Best_Silhouette', 'NMI', 'AMI', 'CHI', 'DBI', 'Runtime_Sec'];
+            const rows = filteredRuns.map(r => [
+                r.model_short,
+                r.dataset,
+                r.seed,
+                r.peak_ari,
+                r.peak_ari_epoch,
+                r.peak_stage,
+                r.best_sil_ari,
+                r.last_ari,
+                r.best_sil,
+                r.nmi,
+                r.ami,
+                r.ch || '',
+                r.db || '',
+                r.runtime || ''
+            ]);
+
+            let csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', 'AriseSpatialGlue_Benchmark_Results.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
