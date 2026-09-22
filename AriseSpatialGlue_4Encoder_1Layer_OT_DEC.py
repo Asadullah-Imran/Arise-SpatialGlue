@@ -533,7 +533,7 @@ class Dual4Encoder1LayerDEC(nn.Module):
       Stage 2: L_total = β * L_recon + γ * L_spatial + δ * L_reg + κ * L_kl
     """
     def __init__(self, in_channels, hidden_channels, out_channels, q, num_clusters,
-                 beta=25.0, gamma=10.0, delta=1.0, kl_weight=1.0,ot_weight=1.0, ot_eps=0.1,ot_max_iter=30, dropout=0.0,
+                 beta=25.0, gamma=10.0, delta=1.0, kl_weight=1.0,ot_lambda=1.0, ot_eps=0.1,ot_max_iter=30, dropout=0.0,
                  l1_lambda=1e-4, l2_lambda=1e-3):
         super(Dual4Encoder1LayerDEC, self).__init__()
         self.gcn = DualGCNAll1Layer(in_channels, hidden_channels, out_channels, q, dropout)
@@ -544,7 +544,7 @@ class Dual4Encoder1LayerDEC(nn.Module):
         self.gamma = gamma
         self.delta = delta
         self.kl_weight = kl_weight
-        self.ot_weight = ot_weight
+        self.ot_lambda = ot_lambda
         self.l1_lambda = l1_lambda
         self.l2_lambda = l2_lambda
 
@@ -633,7 +633,7 @@ class Dual4Encoder1LayerDEC(nn.Module):
         total_loss = (self.beta * total_recon +
                       self.gamma * l_spatial +
                       self.delta * reg_loss +
-                      self.ot_weight * l_ot)
+                      self.ot_lambda * l_ot)
 
         loss_dict = {
             'loss_total': total_loss.item(),
@@ -756,10 +756,10 @@ def train_model_dec(
             best_labels = preds.copy()
             best_stage_sil = "Pre-train"
 
-        pbar1.set_postfix({'Loss': f"{loss.item():.4f}", 'Sil': f"{sil:.4f}", 'BestSil': f"{best_sil:.4f}"})
+        pbar1.set_postfix({'Loss': f"{loss.item():.4f}", 'OT': f"{loss_dict['loss_ot']:.4f}", 'Sil': f"{sil:.4f}", 'BestSil': f"{best_sil:.4f}"})
 
         if verbose and (epoch + 1) % 50 == 0:
-            tqdm.write(f"Pretrain Ep {epoch + 1:3d}/{pretrain_epochs} | Total Loss: {loss.item():.4f} | Recon: {loss_dict['loss_recon']:.4f} | Sil: {sil:.4f}{ari_str} | Best Sil: {best_sil:.4f}")
+            tqdm.write(f"Pretrain Ep {epoch + 1:3d}/{pretrain_epochs} | Total Loss: {loss.item():.4f} | Recon: {loss_dict['loss_recon']:.4f} | OT: {loss_dict['loss_ot']:.4f} | Sil: {sil:.4f}{ari_str} | Best Sil: {best_sil:.4f}")
 
     # --------------------------------------------------------------------------
     # Initialize Spatial Potts DEC Cluster Prototypes
@@ -1146,7 +1146,7 @@ def run_experiment(
     gamma: float = 10.0,
     delta: float = 1.0,
     kl_weight: float = 1.0,
-    ot_weight: float = 1.0,
+    ot_lambda: float = 1.0,
     ot_eps: float = 0.1,
     ot_max_iter: int = 30,
     hidden_dim: int = 512,
@@ -1253,7 +1253,7 @@ def run_experiment(
                 gamma=gamma,
                 delta=delta,
                 kl_weight=kl_weight,
-                ot_weight=ot_weight,
+                ot_lambda=ot_lambda,
                 ot_eps=ot_eps,
                 ot_max_iter=ot_max_iter,
                 dropout=dropout
@@ -1388,7 +1388,7 @@ if __name__ == '__main__':
     parser.add_argument('--beta', type=float, default=25.0, help="Reconstruction loss weight")
     parser.add_argument('--gamma', type=float, default=10.0, help="Spatial regularization weight")
     parser.add_argument('--delta', type=float, default=1.0, help="Weight decay regularization weight")
-    parser.add_argument('--ot_weight',type=float,default=1.0,help="Sinkhorn OT loss weight")
+    parser.add_argument('--ot_lambda',type=float,default=1.0,help="Sinkhorn OT loss weight")
     parser.add_argument('--ot_eps',type=float,default=0.1,help="Sinkhorn entropy regularization coefficient")
     parser.add_argument('--ot_max_iter',type=int,default=30,help="Number of Sinkhorn iterations")
     parser.add_argument('--kl_weight', type=float, default=1.0, help="DEC KL divergence loss weight (Stage 2)")
@@ -1420,7 +1420,7 @@ if __name__ == '__main__':
         gamma=cli_args.gamma,
         delta=cli_args.delta,
         kl_weight=cli_args.kl_weight,
-        ot_weight=cli_args.ot_weight,
+        ot_lambda=cli_args.ot_lambda,
         ot_eps=cli_args.ot_eps,
         ot_max_iter=cli_args.ot_max_iter,
         hidden_dim=cli_args.hidden_dim,
