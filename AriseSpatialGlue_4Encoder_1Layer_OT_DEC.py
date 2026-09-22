@@ -1155,7 +1155,7 @@ def run_experiment(
     device: Optional[str] = None,
     visualize: bool = True,
     show_plots: bool = False,
-    output_dir: str = "results_arise_dec",
+    output_dir: str = "results_ot_dec",
     data_dir: str = "data"
 ):
     """
@@ -1399,7 +1399,7 @@ if __name__ == '__main__':
     parser.add_argument('--visualize', action='store_true', default=True, help="Generate and save all plots")
     parser.add_argument('--no_visualize', action='store_false', dest='visualize', help="Disable visualizations")
     parser.add_argument('--show_plots', action='store_true', default=False, help="Display plots interactively")
-    parser.add_argument('--output_dir', type=str, default='results_arise_dec', help="Directory to save CSV results and plots")
+    parser.add_argument('--output_dir', type=str, default='results_ot_dec', help="Directory to save CSV results and plots")
     parser.add_argument('--data_dir', type=str, default='data', help="Directory to save/load datasets")
 
     cli_args = parser.parse_args()
