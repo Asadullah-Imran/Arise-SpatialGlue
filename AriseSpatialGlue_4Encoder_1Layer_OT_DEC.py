@@ -701,6 +701,7 @@ def train_model_dec(
     loss_history = []
     loss_recon_history = []
     loss_kl_history = []
+    loss_ot_history = []
     epoch_sil_history = []
     epoch_ari_history = []
 
@@ -722,6 +723,7 @@ def train_model_dec(
         loss_history.append(loss_dict['loss_total'])
         loss_recon_history.append(loss_dict['loss_recon'])
         loss_kl_history.append(0.0)
+        loss_ot_history.append(loss_dict['loss_ot'])
 
         # Validation clustering
         model.eval()
@@ -787,6 +789,7 @@ def train_model_dec(
         loss_history.append(loss_dict['loss_total'])
         loss_recon_history.append(loss_dict['loss_recon'])
         loss_kl_history.append(loss_dict['loss_kl'])
+        loss_ot_history.append(loss_dict['loss_ot'])
 
         # Validation clustering with DEC assignments
         model.eval()
@@ -820,10 +823,10 @@ def train_model_dec(
             best_labels = preds.copy()
             best_stage_sil = "DEC-Potts"
 
-        pbar2.set_postfix({'Loss': f"{loss.item():.4f}", 'KL': f"{loss_dict['loss_kl']:.4f}", 'Sil': f"{sil:.4f}", 'BestSil': f"{best_sil:.4f}"})
+        pbar2.set_postfix({'Loss': f"{loss.item():.4f}", 'OT': f"{loss_dict['loss_ot']:.4f}", 'KL': f"{loss_dict['loss_kl']:.4f}", 'Sil': f"{sil:.4f}", 'BestSil': f"{best_sil:.4f}"})
 
         if verbose and (epoch + 1) % 25 == 0:
-            tqdm.write(f"DEC Ep {epoch + 1:3d}/{finetune_epochs} (Total {curr_epoch:3d}) | Total Loss: {loss.item():.4f} | KL: {loss_dict['loss_kl']:.4f} | Sil: {sil:.4f}{ari_str} | Best Sil: {best_sil:.4f}")
+            tqdm.write(f"DEC Ep {epoch + 1:3d}/{finetune_epochs} (Total {curr_epoch:3d}) | Total Loss: {loss.item():.4f} | OT: {loss_dict['loss_ot']:.4f} | KL: {loss_dict['loss_kl']:.4f} | Sil: {sil:.4f}{ari_str} | Best Sil: {best_sil:.4f}")
 
     last_sil = epoch_sil_history[-1] if epoch_sil_history else 0.0
     last_ari = epoch_ari_history[-1] if epoch_ari_history else 0.0
@@ -865,6 +868,7 @@ def train_model_dec(
         'loss_kl_history': loss_kl_history,
         'epoch_sil_history': epoch_sil_history,
         'epoch_ari_history': epoch_ari_history,
+        'loss_ot_history': loss_ot_history,
         'pretrain_epochs': pretrain_epochs,
         'finetune_epochs': finetune_epochs
     }
