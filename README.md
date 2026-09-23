@@ -175,18 +175,18 @@ $$\mathcal{L}_{\text{total}} = \sum_{i} \left(\frac{1}{2} e^{-s_i} \mathcal{L}_i
 
 ## 📋 Master Comparison Matrix
 
-| Capability | `Base` | `Base_OT` | `Base_DEC` | `Base_Dense_DEC` | `Base_OT_DEC` | `PlusV2` | `PlusV2_DEC` | `PlusV2_Motif_DEC` |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **4-Stream 1-Layer GCNs** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **RNA PCA (60/100 Comps)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Multi-Order Motif Topology (V9)** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **Spatial Graph-Masked Cross-Attn (V11)** | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| **Dense Gram Relational Loss (V7)** | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ |
-| **Sinkhorn Optimal Transport Loss (V12)** | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
-| **Spatial Potts Consensus DEC (V14)** | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
-| **Kendall & Gal Uncertainty Balancing** | ❌ (Static) | ❌ (Static) | ❌ (Static) | ❌ (Static) | ❌ (Static) | ✅ (4 Tasks) | ✅ (5 Tasks) | ✅ (5 Tasks) |
-| **Training Regime** | 1-Stage | 1-Stage | 2-Stage | 2-Stage | 2-Stage | 1-Stage | 2-Stage | 2-Stage |
-| **Output Directory** | `results/` | `results_ot/` | `results_dec/` | `results_dense_dec/` | `results_ot_dec/` | `results_arise_plus_v2/` | `results_arise_plus_v2_dec/` | `results_arise_plus_v2_motif_dec/` |
+| Capability | `Base` | `Base_OT` | `Base_DEC` | `Base_Kendall_DEC` | `Base_Dense_DEC` | `Base_OT_DEC` | `PlusV2` | `PlusV2_DEC` | `PlusV2_Motif_DEC` |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **4-Stream 1-Layer GCNs** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **RNA PCA (60/100 Comps)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Multi-Order Motif Topology (V9)** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Spatial Graph-Masked Cross-Attn (V11)** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| **Dense Gram Relational Loss (V7)** | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ |
+| **Sinkhorn Optimal Transport Loss (V12)** | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| **Spatial Potts Consensus DEC (V14)** | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| **Kendall & Gal Uncertainty Balancing** | ❌ (Static) | ❌ (Static) | ❌ (Static) | ✅ (3 Tasks) | ❌ (Static) | ❌ (Static) | ✅ (4 Tasks) | ✅ (5 Tasks) | ✅ (5 Tasks) |
+| **Training Regime** | 1-Stage | 1-Stage | 2-Stage | 2-Stage | 2-Stage | 2-Stage | 1-Stage | 2-Stage | 2-Stage |
+| **Output Directory** | `results/` | `results_ot/` | `results_dec/` | `results_kendall_gal_dec/` | `results_dense_dec/` | `results_ot_dec/` | `results_arise_plus_v2/` | `results_arise_plus_v2_dec/` | `results_arise_plus_v2_motif_dec/` |
 
 ---
 
@@ -194,13 +194,13 @@ $$\mathcal{L}_{\text{total}} = \sum_{i} \left(\frac{1}{2} e^{-s_i} \mathcal{L}_i
 
 The models use either static hyperparameters or Kendall & Gal dynamic uncertainty weighting:
 
-| Hyperparameter | Symbol | `Base` Variants | `PlusV2` Variants | Description |
+| Hyperparameter | Symbol | `Base` Variants | `PlusV2` (and `Base_Kendall`) | Description |
 | :--- | :---: | :--- | :--- | :--- |
 | **Reconstruction Loss Weight** | `beta` ($\beta$) | 25.0 (Static) | Dynamic (`p0`) | Weight for MSE reconstruction loss |
 | **Spatial Contrastive Loss Weight** | `gamma` ($\gamma$) | 10.0 (Static) | Dynamic (`p1`) | Weight for spatial similarity regularization |
 | **Dense Relational Loss Weight** | `lambda_dense` | 1.0 (Static, `Dense_DEC`) | Dynamic (`p2`) | Weight for Gram matrix alignment |
 | **Sinkhorn OT Loss Weight** | `lambda_ot` | 1.0 (Static, `OT`) | Dynamic (`p3`) | Weight for Optimal Transport loss |
-| **DEC KL Divergence Weight** | `kl_weight` ($\kappa$) | 1.0 (Static) | Dynamic (`p4`) | Weight for clustering distribution alignment |
+| **DEC KL Divergence Weight** | `kl_weight` ($\kappa$) | 1.0 (Static) | Dynamic (`p4` / `p2`) | Weight for clustering distribution alignment |
 | **L1/L2 Regularization** | `delta` ($\delta$) | 1.0 (Static) | 1.0 (Static) | Generic network weight regularization |
 
 *Note: PlusV2 variants use learnable log-variances ($s_i$) initialized to 0.0, transforming into dynamic precision weights $p_i = \exp(-s_i)$.*
@@ -213,6 +213,7 @@ The models use either static hyperparameters or Kendall & Gal dynamic uncertaint
 | :--- | :--- | :--- |
 | [`AriseSpatialGlue_4Encoder_1Layer.py`](file:///Users/imran/Developer/FYDP/forGit/Arise+SpatialGlue/AriseSpatialGlue_4Encoder_1Layer.py) | Lightweight 4-encoder 1-layer baseline | Standard baseline benchmarking |
 | [`AriseSpatialGlue_4Encoder_1Layer_DEC.py`](file:///Users/imran/Developer/FYDP/forGit/Arise+SpatialGlue/AriseSpatialGlue_4Encoder_1Layer_DEC.py) | 4-encoder 1-layer baseline + Spatial Potts DEC | Baseline with differentiable cluster smoothing |
+| [`AriseSpatialGlue_4Encoder_1Layer_kendall-gal_DEC.py`](file:///Users/imran/Developer/FYDP/forGit/Arise+SpatialGlue/AriseSpatialGlue_4Encoder_1Layer_kendall-gal_DEC.py) | 4-encoder 1-layer baseline + Spatial Potts DEC + Kendall & Gal | Baseline with dynamic uncertainty weight balancing |
 | [`AriseSpatialGlue_4Encoder_1Layer_Dense_DEC.py`](file:///Users/imran/Developer/FYDP/forGit/Arise+SpatialGlue/AriseSpatialGlue_4Encoder_1Layer_Dense_DEC.py) | 4-encoder 1-layer baseline + Dense Gram Relational Loss + Spatial Potts DEC | Baseline with Gram matrix alignment and cluster smoothing |
 | [`AriseSpatialGlue_4Encoder_1Layer_OT.py`](file:///Users/imran/Developer/FYDP/forGit/Arise+SpatialGlue/AriseSpatialGlue_4Encoder_1Layer_OT.py) | 4-encoder 1-layer baseline + Sinkhorn Optimal Transport | Baseline with optimal transport probability alignment |
 | [`AriseSpatialGlue_4Encoder_1Layer_OT_DEC.py`](file:///Users/imran/Developer/FYDP/forGit/Arise+SpatialGlue/AriseSpatialGlue_4Encoder_1Layer_OT_DEC.py) | 4-encoder 1-layer baseline + Sinkhorn OT + Spatial Potts DEC | Baseline with optimal transport and cluster smoothing |
@@ -234,32 +235,37 @@ The models use either static hyperparameters or Kendall & Gal dynamic uncertaint
 !python AriseSpatialGlue_4Encoder_1Layer_DEC.py --datasets all --seeds 42 1234 2024 --rna_pca_comps 60 --epochs 400 --visualize
 ```
 
-### 3. Run Base + Dense + DEC Pipeline
+### 3. Run Base + Kendall & Gal + DEC Pipeline
+```bash
+!python AriseSpatialGlue_4Encoder_1Layer_kendall-gal_DEC.py --datasets all --seeds 42 1234 2024 --rna_pca_comps 60 --epochs 400 --visualize
+```
+
+### 4. Run Base + Dense + DEC Pipeline
 ```bash
 !python AriseSpatialGlue_4Encoder_1Layer_Dense_DEC.py --datasets all --seeds 42 1234 2024 --rna_pca_comps 60 --epochs 400 --visualize
 ```
 
-### 4. Run Base + OT Pipeline
+### 5. Run Base + OT Pipeline
 ```bash
 !python AriseSpatialGlue_4Encoder_1Layer_OT.py --datasets all --seeds 42 1234 2024 --rna_pca_comps 60 --epochs 350 --visualize
 ```
 
-### 5. Run Base + OT + DEC Pipeline
+### 6. Run Base + OT + DEC Pipeline
 ```bash
 !python AriseSpatialGlue_4Encoder_1Layer_OT_DEC.py --datasets all --seeds 42 1234 2024 --rna_pca_comps 60 --epochs 400 --visualize
 ```
 
-### 6. Run PlusV2 Pipeline (Cross-Attn + Geometric Losses)
+### 7. Run PlusV2 Pipeline (Cross-Attn + Geometric Losses)
 ```bash
 !python AriseSpatialGlue_4Encoder_1Layer_PlusV2.py --datasets all --seeds 42 1234 2024 --rna_pca_comps 60 --epochs 400 --visualize
 ```
 
-### 7. Run PlusV2 + DEC Pipeline (Two-Stage Fine-Tuning)
+### 8. Run PlusV2 + DEC Pipeline (Two-Stage Fine-Tuning)
 ```bash
 !python AriseSpatialGlue_4Encoder_1Layer_PlusV2_DEC.py --datasets all --seeds 42 1234 2024 --rna_pca_comps 60 --epochs 400 --visualize
 ```
 
-### 8. Run Grand Champion Pipeline (Motifs + Losses + DEC)
+### 9. Run Grand Champion Pipeline (Motifs + Losses + DEC)
 ```bash
 !python AriseSpatialGlue_4Encoder_1Layer_PlusV2_Motif_DEC.py --datasets all --seeds 42 1234 2024 --rna_pca_comps 60 --epochs 400 --visualize
 ```

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-  🧬 AriseSpatialGlue_4Encoder_1Layer_DEC.py
+  🧬 AriseSpatialGlue_4Encoder_1Layer_kendall-gal_DEC.py
 
   4-Encoder 1-Layer Arise Architecture with Spatial Potts DEC:
   1. 📐 4-Stream 1-Layer GCNs (RNA Spatial, RNA Sim, Aux Spatial, Aux Sim)
@@ -9,7 +9,7 @@
   3. 🔗 Static Concat Fusion (Intra-Omic + Inter-Omic Linear Fusion)
   4. 📉 Multi-Head Reconstruction Loss + Spatial Contrastive Regularization
   5. 🎯 Spatial Potts MRF-Regularized Consensus DEC (2-Stage Fine-Tuning)
-  6. ⚖️ Static Loss Weights (β=25, γ=10, δ=1, κ=1.0)
+  6. ⚖️ Kendall & Gal Uncertainty Multi-Task Adaptive Loss Weighting (3 Objectives)
   7. 📈 Complete Diagnostic Visual Analytics Suite:
      - Multi-Task Training Curves (Total Loss, Silhouette, ARI) with Stage Boundary
      - Spatial Domain Clustering Maps (Ground Truth vs. Model Predictions)
