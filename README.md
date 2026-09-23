@@ -175,18 +175,18 @@ $$\mathcal{L}_{\text{total}} = \sum_{i} \left(\frac{1}{2} e^{-s_i} \mathcal{L}_i
 
 ## 📋 Master Comparison Matrix
 
-| Capability | `Base` | `Base_OT` | `Base_DEC` | `Base_Kendall` | `Base_MaskedAttn` | `Base_Dense` | `Base_OT_DEC` | `PlusV2` | `PlusV2_DEC` | `PlusV2_Motif_DEC` |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **4-Stream 1-Layer GCNs** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **RNA PCA (60/100 Comps)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Multi-Order Motif Topology (V9)** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **Spatial Graph-Masked Cross-Attn (V11)** | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| **Dense Gram Relational Loss (V7)** | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ |
-| **Sinkhorn Optimal Transport Loss (V12)** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
-| **Spatial Potts Consensus DEC (V14)** | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
-| **Kendall & Gal Uncertainty Balancing** | ❌ (Static) | ❌ (Static) | ❌ (Static) | ✅ (3 Tasks) | ❌ (Static) | ❌ (Static) | ❌ (Static) | ✅ (4 Tasks) | ✅ (5 Tasks) | ✅ (5 Tasks) |
-| **Training Regime** | 1-Stage | 1-Stage | 2-Stage | 2-Stage | 2-Stage | 2-Stage | 2-Stage | 1-Stage | 2-Stage | 2-Stage |
-| **Output Directory** | `results/` | `results_ot/` | `results_dec/` | `results_kendall_gal_dec/` | `results_masked_attn_dec/` | `results_dense_dec/` | `results_ot_dec/` | `results_arise_plus_v2/` | `results_arise_plus_v2_dec/` | `results_arise_plus_v2_motif_dec/` |
+| Capability | `Base` | `Base_OT` | `Base_DEC` | `Base_Kendall` | `Base_MaskedAttn` | `Base_Dense` | `Base_OT_DEC` | `PlusV2` | `PlusV2_DEC` | `PlusV2_Motif_DEC` | `PlusV2_Motif_Static` |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **4-Stream 1-Layer GCNs** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **RNA PCA (60/100 Comps)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Multi-Order Motif Topology (V9)** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| **Spatial Graph-Masked Cross-Attn (V11)** | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| **Dense Gram Relational Loss (V7)** | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| **Sinkhorn Optimal Transport Loss (V12)** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Spatial Potts Consensus DEC (V14)** | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ |
+| **Kendall & Gal Uncertainty Balancing** | ❌ (Static) | ❌ (Static) | ❌ (Static) | ✅ (3 Tasks) | ❌ (Static) | ❌ (Static) | ❌ (Static) | ✅ (4 Tasks) | ✅ (5 Tasks) | ✅ (5 Tasks) | ❌ (Static) |
+| **Training Regime** | 1-Stage | 1-Stage | 2-Stage | 2-Stage | 2-Stage | 2-Stage | 2-Stage | 1-Stage | 2-Stage | 2-Stage | 2-Stage |
+| **Output Directory** | `results/` | `results_ot/` | `results_dec/` | `results_kendall_gal_dec/` | `results_masked_attn_dec/` | `results_dense_dec/` | `results_ot_dec/` | `results_arise_plus_v2/` | `results_arise_plus_v2_dec/` | `results_arise_plus_v2_motif_dec/` | `results_plus_v2_motif_dec_static/` |
 
 ---
 
@@ -221,6 +221,7 @@ The models use either static hyperparameters or Kendall & Gal dynamic uncertaint
 | [`AriseSpatialGlue_4Encoder_1Layer_PlusV2.py`](file:///Users/imran/Developer/FYDP/forGit/Arise+SpatialGlue/AriseSpatialGlue_4Encoder_1Layer_PlusV2.py) | Synergistic geometric losses + spatial attention | Clean single-stage multi-modal alignment |
 | [`AriseSpatialGlue_4Encoder_1Layer_PlusV2_DEC.py`](file:///Users/imran/Developer/FYDP/forGit/Arise+SpatialGlue/AriseSpatialGlue_4Encoder_1Layer_PlusV2_DEC.py) | Synergistic losses + 2-stage Spatial Potts DEC | Differentiable cluster smoothing without motifs |
 | [`AriseSpatialGlue_4Encoder_1Layer_PlusV2_Motif_DEC.py`](file:///Users/imran/Developer/FYDP/forGit/Arise+SpatialGlue/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Motif_DEC.py) | Complete Grand Champion integration | Peak ARI performance & spatial domain continuity |
+| [`AriseSpatialGlue_4Encoder_1Layer_PlusV2_Motif_DEC-without-kendall-gal.py`](file:///Users/imran/Developer/FYDP/forGit/Arise+SpatialGlue/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Motif_DEC-without-kendall-gal.py) | PlusV2 architecture + Motifs (V9) + Spatial Potts DEC (Static Weights) | Grand Champion with manually tuned static loss weights |
 
 ---
 
@@ -274,6 +275,11 @@ The models use either static hyperparameters or Kendall & Gal dynamic uncertaint
 ### 10. Run Grand Champion Pipeline (Motifs + Losses + DEC)
 ```bash
 !python AriseSpatialGlue_4Encoder_1Layer_PlusV2_Motif_DEC.py --datasets all --seeds 42 1234 2024 --rna_pca_comps 60 --epochs 400 --visualize
+```
+
+### 11. Run Grand Champion Pipeline (Static Weights Variant)
+```bash
+!python AriseSpatialGlue_4Encoder_1Layer_PlusV2_Motif_DEC-without-kendall-gal.py --datasets all --seeds 42 1234 2024 --rna_pca_comps 60 --epochs 400 --visualize --beta 25.0 --gamma 10.0 --lambda_dense 1.0 --lambda_ot 1.0 --kl_weight 1.0 --delta 1.0
 ```
 
 ---
