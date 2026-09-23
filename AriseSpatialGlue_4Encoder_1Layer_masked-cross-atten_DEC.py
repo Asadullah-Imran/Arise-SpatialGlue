@@ -239,7 +239,6 @@ class Dual4GraphDataDEC(Data):
                  dist_edge_index_rna, dist_edge_weight_rna,
                  sim_edge_index_aux, sim_edge_weight_aux,
                  dist_edge_index_aux, dist_edge_weight_aux,
-                 dist_edge_index_aux, dist_edge_weight_aux,
                  spatial_adj, spatial_mask):
         super().__init__()
         self.x_RNA = x_RNA
