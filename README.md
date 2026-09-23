@@ -175,19 +175,20 @@ $$\mathcal{L}_{\text{total}} = \sum_{i} \left(\frac{1}{2} e^{-s_i} \mathcal{L}_i
 
 ## 📋 Master Comparison Matrix
 
-| Capability | `Base` | `Base_OT` | `Base_DEC` | `Base_Kendall` | `Base_MaskedAttn` | `Base_Dense` | `Base_OT_DEC` | `PlusV2` | `PlusV2_DEC` | `PlusV2_Motif_DEC` | `PlusV2_Motif_Static` | `SpatialAriseGlue` | `SpatialAriseCage` |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **4-Stream 1-Layer GCNs** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **RNA PCA (60/100 Comps)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Multi-Order Motif Topology (V9)** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
-| **Spatial Graph-Masked Cross-Attn (V11)** | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Dense Gram Relational Loss (V7)** | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Sinkhorn Optimal Transport Loss (V12)** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Spatial Potts Consensus DEC (V14)** | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Kendall & Gal Uncertainty Balancing** | ❌ (Static) | ❌ (Static) | ❌ (Static) | ✅ (3 Tasks) | ❌ (Static) | ❌ (Static) | ❌ (Static) | ✅ (4 Tasks) | ✅ (5 Tasks) | ✅ (5 Tasks) | ❌ (Static) | ❌ (Static) | ❌ (Static) |
-| **Fusion Mechanism** | Linear | Linear | Linear | Linear | Linear | Linear | Linear | Linear | Linear | Linear | Linear | **AttentionLayer** | **CAGE Gated & QKV** |
-| **Training Regime** | 1-Stage | 1-Stage | 2-Stage | 2-Stage | 2-Stage | 2-Stage | 2-Stage | 1-Stage | 2-Stage | 2-Stage | 2-Stage | 1-Stage | 1-Stage |
-| **Output Directory** | `results/` | `results_ot/` | `results_dec/` | `results_kendall_gal_dec/` | `results_masked_attn_dec/` | `results_dense_dec/` | `results_ot_dec/` | `results_arise_plus_v2/` | `results_arise_plus_v2_dec/` | `results_arise_plus_v2_motif_dec/` | `results_plus_v2_motif_dec_static/` | `results_spatial_arise_glue/` | `results_spatial_arise_cage/` |
+| Capability | `Base` | `Base_OT` | `Base_DEC` | `Base_Kendall` | `Base_MaskedAttn` | `Base_Dense` | `Base_OT_DEC` | `PlusV2` | `PlusV2_DEC` | `PlusV2_Motif_DEC` | `PlusV2_Motif_Static` | `SpatialAriseGlue` | `SpatialAriseCage` | `SpatialAriseSGLoss` |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **4-Stream 1-Layer GCNs** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **RNA PCA (60/100 Comps)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Multi-Order Motif Topology (V9)** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Spatial Graph-Masked Cross-Attn (V11)** | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Dense Gram Relational Loss (V7)** | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Sinkhorn Optimal Transport Loss (V12)** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Spatial Potts Consensus DEC (V14)** | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Kendall & Gal Uncertainty Balancing** | ❌ (Static) | ❌ (Static) | ❌ (Static) | ✅ (3 Tasks) | ❌ (Static) | ❌ (Static) | ❌ (Static) | ✅ (4 Tasks) | ✅ (5 Tasks) | ✅ (5 Tasks) | ❌ (Static) | ❌ (Static) | ❌ (Static) | ❌ (Static) |
+| **Loss Mechanism** | Multi-Head + Spatial | Multi-Head + Spatial | Multi-Head + Spatial | Multi-Head + Spatial | Multi-Head + Spatial | Multi-Head + Spatial | Multi-Head + Spatial | Multi-Head + Spatial | Multi-Head + Spatial | Multi-Head + Spatial | Multi-Head + Spatial | Multi-Head + Spatial | Multi-Head + Spatial | **Recon + Cycle-Consistency** |
+| **Fusion Mechanism** | Linear | Linear | Linear | Linear | Linear | Linear | Linear | Linear | Linear | Linear | Linear | **AttentionLayer** | **CAGE Gated & QKV** | Linear |
+| **Training Regime** | 1-Stage | 1-Stage | 2-Stage | 2-Stage | 2-Stage | 2-Stage | 2-Stage | 1-Stage | 2-Stage | 2-Stage | 2-Stage | 1-Stage | 1-Stage | 1-Stage |
+| **Output Directory** | `results/` | `results_ot/` | `results_dec/` | `results_kendall_gal_dec/` | `results_masked_attn_dec/` | `results_dense_dec/` | `results_ot_dec/` | `results_arise_plus_v2/` | `results_arise_plus_v2_dec/` | `results_arise_plus_v2_motif_dec/` | `results_plus_v2_motif_dec_static/` | `results_spatial_arise_glue/` | `results_spatial_arise_cage/` | `results_spatial_arise_sgloss/` |
 
 ---
 
@@ -225,6 +226,7 @@ The models use either static hyperparameters or Kendall & Gal dynamic uncertaint
 | [`AriseSpatialGlue_4Encoder_1Layer_PlusV2_Motif_DEC-without-kendall-gal.py`](file:///Users/imran/Developer/FYDP/forGit/Arise+SpatialGlue/AriseSpatialGlue_4Encoder_1Layer_PlusV2_Motif_DEC-without-kendall-gal.py) | PlusV2 architecture + Motifs (V9) + Spatial Potts DEC (Static Weights) | Grand Champion with manually tuned static loss weights |
 | [`spatialAriseGlue.py`](file:///Users/imran/Developer/FYDP/forGit/Arise+SpatialGlue/spatialAriseGlue.py) | 4-encoder 1-layer baseline + SpatialGlue AttentionLayer | Dynamic attention-based intra- and inter-modality fusion |
 | [`spatialAriseCage.py`](file:///Users/imran/Developer/FYDP/forGit/Arise+SpatialGlue/spatialAriseCage.py) | 4-encoder 1-layer baseline + CAGE Gated/QKV Fusion | CAGE-style sigmoid gated intra-fusion and QKV cross-fusion |
+| [`spatialAriseSGLoss.py`](file:///Users/imran/Developer/FYDP/forGit/Arise+SpatialGlue/spatialAriseSGLoss.py) | 4-encoder 1-layer baseline + SpatialGlue Losses | SpatialGlue Recon & Cycle-Consistency Correspondence Loss |
 
 ---
 
@@ -293,6 +295,11 @@ The models use either static hyperparameters or Kendall & Gal dynamic uncertaint
 ### 13. Run SpatialAriseCage Pipeline (Gated & QKV Fusion)
 ```bash
 !python spatialAriseCage.py --datasets all --seeds 42 1234 2024 --rna_pca_comps 60 --epochs 350 --visualize
+```
+
+### 14. Run SpatialAriseSGLoss Pipeline (Cycle-Consistency Loss)
+```bash
+!python spatialAriseSGLoss.py --datasets all --seeds 42 1234 2024 --rna_pca_comps 60 --epochs 350 --visualize --beta 25.0 --gamma 10.0
 ```
 
 ---
