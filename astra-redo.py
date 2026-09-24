@@ -15,7 +15,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.neighbors import NearestNeighbors, kneighbors_graph
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_samples,
+from sklearn.metrics import silhouette_samples
 from sklearn.metrics import (
     adjusted_rand_score,
     normalized_mutual_info_score,
