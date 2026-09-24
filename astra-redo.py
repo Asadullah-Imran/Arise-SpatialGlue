@@ -911,7 +911,7 @@ if __name__ == '__main__':
     parser.add_argument('--lambda_dec', type=float, default=1.0, help="DEC loss weight")
     parser.add_argument('--lambda_spatial', type=float, default=0.15, help="Spatial consensus weight")
     parser.add_argument('--output_dir', type=str, default='results/astra_redo_Results', help="Output directory")
-    parser.add_argument('--no_visualize', action='store_true', help="Disable plotting")
+    parser.add_argument('--visualize', action='store_true', default=True, help="Generate and save all plots (Curves, Spatial, UMAP, Violin)")
     
     args = parser.parse_args()
     
@@ -924,5 +924,5 @@ if __name__ == '__main__':
         lambda_dec=args.lambda_dec,
         lambda_spatial=args.lambda_spatial,
         output_dir=args.output_dir,
-        visualize=not args.no_visualize
+        visualize=args.visualize
     )
