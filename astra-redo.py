@@ -837,10 +837,7 @@ def run_experiment(datasets="all", seeds=None, pretrain_epochs=250, finetune_epo
             print(f"Dataset {dataset_name} not found in CHOICES. Skipping.")
             continue
             
-        print(f"
-{'='*80}
- STARTING DATASET: {dataset_name}
-{'='*80}")
+        print(f"\n{'='*80}\n STARTING DATASET: {dataset_name}\n{'='*80}")
         rna_path, aux_path, anno_path, gt_col = resolve_dataset_files(dataset_name, folder_url)
         adata_RNA = sc.read_h5ad(rna_path)
         adata_aux = sc.read_h5ad(aux_path)
@@ -858,10 +855,7 @@ def run_experiment(datasets="all", seeds=None, pretrain_epochs=250, finetune_epo
         
         dataset_results = []
         for seed in seeds:
-            print(f"
-{'-'*65}
- Dataset: {dataset_name} | Seed: {seed}
-{'-'*65}")
+            print(f"\n{'-'*65}\n Dataset: {dataset_name} | Seed: {seed}\n{'-'*65}")
             set_seed(seed)
             model = ASTRA_v1_DEC_Gated(
                 in_channels=RNA_data.shape[1], hidden_channels=512, out_channels=64,
@@ -898,8 +892,7 @@ def run_experiment(datasets="all", seeds=None, pretrain_epochs=250, finetune_epo
         
     df_all = pd.DataFrame(all_results)
     df_all.to_csv(os.path.join(output_dir, "ASTRA_Redo_all_results.csv"), index=False)
-    print("
-Experiment Completed! Results saved to", output_dir)
+    print("\nExperiment Completed! Results saved to", output_dir)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="ASTRA-Redo Multi-Omics Model CLI")
