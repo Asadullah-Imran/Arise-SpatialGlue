@@ -819,7 +819,7 @@ def plot_all_visualizations(
 # ==============================================================================
 
 def run_experiment(datasets="all", seeds=None, pretrain_epochs=250, finetune_epochs=150, lr=1e-3, 
-                   lambda_dec=1.0, lambda_spatial=0.15, output_dir="results/astra_redo_Results", 
+                   lambda_dec=1.0, lambda_spatial=0.15, output_dir="astra_redo_Results", 
                    visualize=True):
     os.makedirs(output_dir, exist_ok=True)
     if seeds is None: seeds = [42, 1234, 2024]
@@ -912,7 +912,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=1e-3, help="Learning rate")
     parser.add_argument('--lambda_dec', type=float, default=1.0, help="DEC loss weight")
     parser.add_argument('--lambda_spatial', type=float, default=0.15, help="Spatial consensus weight")
-    parser.add_argument('--output_dir', type=str, default='results/astra_redo_Results', help="Output directory")
+    parser.add_argument('--output_dir', type=str, default='astra_redo_Results', help="Output directory")
     parser.add_argument('--visualize', action='store_true', default=True, help="Generate and save all plots (Curves, Spatial, UMAP, Violin)")
     
     args = parser.parse_args()
