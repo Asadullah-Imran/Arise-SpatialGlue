@@ -827,8 +827,17 @@ def run_experiment(datasets="all", seeds=None, pretrain_epochs=250, finetune_epo
     if datasets == "all":
         dataset_names = [c[0] for c in CHOICES]
     else:
-        dataset_names = datasets
-        
+        dataset_names = []
+        for d in datasets:
+            if isinstance(d, int) or (isinstance(d, str) and d.isdigit()):
+                idx = int(d)
+                if 0 <= idx < len(CHOICES):
+                    dataset_names.append(CHOICES[idx][0])
+                else:
+                    print(f"Invalid dataset index {idx}")
+            else:
+                dataset_names.append(d)
+                
     all_results = []
     
     for dataset_name in dataset_names:
