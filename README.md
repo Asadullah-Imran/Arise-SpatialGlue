@@ -307,6 +307,11 @@ The models use either static hyperparameters or Kendall & Gal dynamic uncertaint
 !python astra-redo.py --datasets all --seeds 42 1234 2024 --pretrain_epochs 250 --finetune_epochs 150 --visualize
 ```
 
+### 16. Run ASTRA Redo + Kendall-Gal Pipeline
+```bash
+!python astra-redo-kendal-gal.py --datasets all --seeds 42 1234 2024 --pretrain_epochs 250 --finetune_epochs 150 --visualize
+```
+
 ---
 
 ## 📈 Visual Analytics & Diagnostic Suite
