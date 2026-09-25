@@ -428,8 +428,7 @@ def evaluate_model(model, data):
     model.eval()
     with torch.no_grad():
         outputs = model(data)
-        fused_pro = outputs['embedding']
-    return fused_pro.cpu().numpy(), fused_rna.cpu().numpy(), fused_aux.cpu().numpy()
+    return outputs['embedding'].cpu().numpy(), outputs['fused_rna'].cpu().numpy(), outputs['x_aux'].cpu().numpy()
 
 
 def train_model(model, data, epochs=350, lr=1e-3, num_clusters=10, true_labels=None, verbose=True):
