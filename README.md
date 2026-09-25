@@ -312,6 +312,11 @@ The models use either static hyperparameters or Kendall & Gal dynamic uncertaint
 !python astra-redo-kendal-gal.py --datasets all --seeds 42 1234 2024 --pretrain_epochs 250 --finetune_epochs 150 --visualize
 ```
 
+### 17. Run 6-Stream Transformer Pipeline (Global & Local Context)
+```bash
+!python AriseSpatialGlue_6Stream_Transformer.py --datasets all --seeds 42 1234 2024 --epochs 350 --visualize
+```
+
 ---
 
 ## 📈 Visual Analytics & Diagnostic Suite
