@@ -317,6 +317,16 @@ The models use either static hyperparameters or Kendall & Gal dynamic uncertaint
 !python AriseSpatialGlue_6Stream_Transformer.py --datasets all --seeds 42 1234 2024 --epochs 350 --visualize
 ```
 
+### 18. Run ASTRA Redo + 3-Way Transformer Pipeline
+```bash
+!python astra-redo-transformer.py --datasets all --seeds 42 1234 2024 --pretrain_epochs 250 --finetune_epochs 150 --visualize
+```
+
+### 19. Run 4-Encoder Gated Fusion Pipeline (Baseline Upgrade)
+```bash
+!python AriseSpatialGlue_4Encoder_GatedFusion.py --datasets all --seeds 42 1234 2024 --epochs 350 --visualize
+```
+
 ---
 
 ## 📈 Visual Analytics & Diagnostic Suite
