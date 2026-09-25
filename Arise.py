@@ -320,6 +320,32 @@ def build_multimodal_graphs(RNA_expression: np.ndarray,
     )
 
 
+def spatial_regularization_loss(emb: torch.Tensor, dist_edge_index: torch.Tensor,
+                                dist_edge_weight: torch.Tensor, num_nodes: int) -> torch.Tensor:
+    graph_nei = torch.sparse_coo_tensor(
+        dist_edge_index, torch.ones_like(dist_edge_weight), size=(num_nodes, num_nodes)
+    ).to_dense()
+    graph_neg = 1.0 - graph_nei
+
+    emb_norm = F.normalize(emb, p=2, dim=1, eps=1e-8)
+    sim_mat = torch.matmul(emb_norm, emb_norm.T)
+    sim_mat = sim_mat - torch.diag_embed(torch.diag(sim_mat))
+    sim_mat = torch.sigmoid(sim_mat)
+
+    neigh_loss = torch.mul(graph_nei, torch.log(sim_mat + 1e-10)).mean()
+    neg_loss = torch.mul(graph_neg, torch.log(1.0 - sim_mat + 1e-10)).mean()
+    return -(neigh_loss + neg_loss) / 2.0
+
+
+def parameter_regularization_loss(model: nn.Module, l1_lambda: float = 1e-4, l2_lambda: float = 1e-3) -> torch.Tensor:
+    l1_loss = torch.tensor(0.0, device=next(model.parameters()).device)
+    l2_loss = torch.tensor(0.0, device=next(model.parameters()).device)
+    for p in model.parameters():
+        if p.requires_grad:
+            l1_loss = l1_loss + torch.sum(torch.abs(p))
+            l2_loss = l2_loss + torch.sum(p ** 2)
+    return l1_lambda * l1_loss + l2_lambda * l2_loss
+
 class ARISEBaselineModel(nn.Module):
     def __init__(self, in_rna_dim: int, in_aux_dim: int, hidden_dim: int = 512, out_dim: int = 64,
                  beta: float = 25.0, gamma: float = 10.0, delta: float = 1.0, dropout: float = 0.0,
