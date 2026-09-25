@@ -327,6 +327,11 @@ The models use either static hyperparameters or Kendall & Gal dynamic uncertaint
 !python AriseSpatialGlue_4Encoder_GatedFusion.py --datasets all --seeds 42 1234 2024 --epochs 350 --visualize
 ```
 
+### 20. Run 4-Encoder Gated Fusion + DEC Pipeline
+```bash
+!python AriseSpatialGlue_4Encoder_GatedFusion_DEC.py --datasets all --seeds 42 1234 2024 --epochs 400 --visualize
+```
+
 ---
 
 ## 📈 Visual Analytics & Diagnostic Suite
